@@ -2,14 +2,94 @@
 // STATE MANAGEMENT
 // ==========================================
 let currentLanguage = 'hinglish';
+let dashboardLanguage = 'english';
+let characterLanguage = 'hinglish';
+// Default to dark theme as base
 let currentTheme = 'dark';
 let ttsEnabled = true;
 let chatHistory = []; // Tracks [{role: 'user'|'model', text: '...'}]
 let speechRecognition = null;
 let isListening = false;
-let currentUserName = 'Aditya';
+let currentUserName = 'User';
 let currentAssistantName = 'Lina';
+let activeCharacter = 'lina';
 let setupLanguage = 'hinglish';
+
+// Voice Presets Configuration
+const voicePresets = {
+    'cute_girl': {
+        name: 'Cute Girl',
+        pitch: 1.45,
+        rate: 1.05,
+        gender: 'female',
+        emoji: '👧🏻'
+    },
+    'hot_boy': {
+        name: 'Hot Boy',
+        pitch: 0.90,
+        rate: 0.95,
+        gender: 'male',
+        emoji: '🙋‍♂️'
+    },
+    'gents': {
+        name: 'Gentleman',
+        pitch: 1.0,
+        rate: 0.95,
+        gender: 'male',
+        emoji: '👨🏻'
+    },
+    'woman': {
+        name: 'Woman',
+        pitch: 1.1,
+        rate: 1.0,
+        gender: 'female',
+        emoji: '👩'
+    },
+    'men_robot': {
+        name: 'Men Robot',
+        pitch: 0.6,
+        rate: 0.9,
+        gender: 'male',
+        emoji: '🤖‍♂️'
+    },
+    'girl_child': {
+        name: 'Girl Child',
+        pitch: 1.7,
+        rate: 1.1,
+        gender: 'female',
+        emoji: '👧'
+    },
+    'boys_child': {
+        name: 'Boys Child',
+        pitch: 1.6,
+        rate: 1.1,
+        gender: 'male',
+        emoji: '👦'
+    },
+    'women_robot': {
+        name: 'Women Robot',
+        pitch: 0.65,
+        rate: 0.9,
+        gender: 'female',
+        emoji: '🤖‍♀️'
+    },
+    'old_man': {
+        name: 'Old Man',
+        pitch: 0.75,
+        rate: 0.8,
+        gender: 'male',
+        emoji: '👴'
+    },
+    'old_woman': {
+        name: 'Old Woman',
+        pitch: 0.85,
+        rate: 0.8,
+        gender: 'female',
+        emoji: '👵'
+    }
+};
+
+let activeVoicePreset = localStorage.getItem('activeVoicePreset') || 'cute_girl';
 
 // Badge metrics
 let codeCount = 0;
@@ -25,6 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConfiguration();
     setupEventListeners();
     setupSpeechRecognition();
+    initVoicePresets();
+    
+    if (synth && synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = () => {
+            initVoicePresets();
+        };
+    }
     
     // Start metric updates loop
     updateMetrics();
@@ -51,16 +138,7 @@ function setupEventListeners() {
         });
     });
 
-    // Language switches
-    const langButtons = document.querySelectorAll('#langToggle button');
-    langButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lang = btn.getAttribute('data-lang');
-            setLanguage(lang);
-            langButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+    // No static buttons for language engine anymore, handled by dropdown select
 
     // Vocal response checkbox
     const ttsCheckbox = document.getElementById('ttsEnabled');
@@ -125,20 +203,32 @@ async function loadConfiguration() {
         const response = await fetch('/api/config');
         const config = await response.json();
         
-        currentLanguage = config.language || 'hinglish';
+        dashboardLanguage = config.dashboard_language || 'english';
+        characterLanguage = config.character_language || 'hinglish';
+        currentLanguage = characterLanguage;
         currentTheme = config.theme || 'dark';
+        activeCharacter = config.active_character || 'lina';
         
-        // Update toggles layout state
-        document.querySelectorAll('#langToggle button').forEach(b => {
-            b.classList.toggle('active', b.getAttribute('data-lang') === currentLanguage);
-        });
+        // Update select dropdowns layout state
+        const dbSelect = document.getElementById('dashboardLangSelect');
+        if (dbSelect) dbSelect.value = dashboardLanguage;
+        const charSelect = document.getElementById('characterLangSelect');
+        if (charSelect) charSelect.value = characterLanguage;
+        localizeUI(dashboardLanguage);
         
         document.querySelectorAll('#themeToggle button').forEach(b => {
             b.classList.toggle('active', b.getAttribute('data-theme') === currentTheme);
         });
         
-        // Apply theme classes
-        document.body.className = `${currentTheme}-theme doer-workspace`;
+        // Apply theme and character class to body
+        document.body.className = `${currentTheme}-theme doer-workspace char-${activeCharacter}`;
+        
+        // Update character switch UI buttons active class
+        document.querySelectorAll('.char-select-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.getElementById(`char-btn-${activeCharacter}`);
+        if (activeBtn) activeBtn.classList.add('active');
         
         // Fill input key displays
         document.getElementById('geminiKey').value = config.gemini_key || '';
@@ -152,6 +242,7 @@ async function loadConfiguration() {
         currentAssistantName = config.assistant_name || 'Lina';
         
         updateUIWithAssistantName();
+        updateProfileSidebarDetails();
         
         if (!config.is_configured) {
             document.getElementById('setupOverlay').classList.remove('hidden');
@@ -160,6 +251,7 @@ async function loadConfiguration() {
         // Load memory items
         fetchMemoryLogs();
         updateSidebarBadges();
+        initVoicePresets();
     } catch (e) {
         showToast("Error loading system configuration.", "error");
     }
@@ -176,13 +268,81 @@ function updateUIWithAssistantName() {
     }
 }
 
-function setSetupLanguage(lang) {
-    setupLanguage = lang;
-    const buttons = document.querySelectorAll('#setupLangToggle button');
-    buttons.forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-    });
+function getCharacterImagePath(char) {
+    const character = char || activeCharacter;
+    if (character === 'resin_robot') {
+        return '/static/images/resin_robot.png';
+    } else if (character === 'cyberpunk_anime') {
+        return '/static/images/cyberpunk_anime.png';
+    }
+    return '/static/images/lina.png';
 }
+
+function updateProfileSidebarDetails() {
+    const portrait = document.getElementById('characterPortrait');
+    const nameEl = document.getElementById('characterProfileName');
+    const titleEl = document.getElementById('characterProfileTitle');
+    
+    if (portrait) portrait.src = getCharacterImagePath();
+    
+    if (nameEl) {
+        let nameText = currentAssistantName;
+        if (activeCharacter === 'resin_robot') {
+            nameText = 'Voxel';
+        } else if (activeCharacter === 'cyberpunk_anime') {
+            nameText = 'Huo Yuner';
+        }
+        nameEl.innerHTML = `${nameText} <span class="verified-badge" title="Verified Assistant">✓</span>`;
+    }
+    
+    if (titleEl) {
+        if (activeCharacter === 'resin_robot') {
+            titleEl.innerText = 'CREATIVE 3D COMPANION';
+        } else if (activeCharacter === 'cyberpunk_anime') {
+            titleEl.innerText = 'CYBERPUNK STRATEGIST';
+        } else {
+            titleEl.innerText = 'EXECUTIVE VOICE ASSISTANT';
+        }
+    }
+}
+
+async function selectCharacter(charName) {
+    if (charName === activeCharacter) return;
+    
+    try {
+        const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                active_character: charName
+            })
+        });
+        
+        const res = await response.json();
+        if (res.status === 'success') {
+            activeCharacter = charName;
+            
+            // Apply body classes (preserving current theme)
+            document.body.className = `${currentTheme}-theme doer-workspace char-${activeCharacter}`;
+            
+            // Update character switcher active classes
+            document.querySelectorAll('.char-select-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = document.getElementById(`char-btn-${activeCharacter}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            updateProfileSidebarDetails();
+            showToast(`Switched assistant to ${charName === 'resin_robot' ? 'Voxel' : charName === 'cyberpunk_anime' ? 'Huo Yuner' : 'Lina'}! ⚡`);
+        } else {
+            showToast("Failed to switch assistant.", "error");
+        }
+    } catch (e) {
+        showToast("Error connecting to settings server.", "error");
+    }
+}
+
+// setSetupLanguage function deprecated as select element handles state directly
 
 async function saveFirstTimeSetup() {
     const userName = document.getElementById('setupUserName').value.trim();
@@ -202,7 +362,9 @@ async function saveFirstTimeSetup() {
                 user_name: userName,
                 assistant_name: assistantName,
                 gemini_key: geminiKey,
-                language: setupLanguage,
+                dashboard_language: document.getElementById('setupDashboardLangSelect').value,
+                character_language: document.getElementById('setupCharacterLangSelect').value,
+                language: document.getElementById('setupCharacterLangSelect').value,
                 theme: currentTheme
             })
         });
@@ -265,26 +427,271 @@ function setTheme(theme) {
     saveSettingsState();
 }
 
-function setLanguage(lang) {
-    currentLanguage = lang;
-    if (speechRecognition) {
-        speechRecognition.lang = (lang === 'hinglish') ? 'hi-IN' : 'en-US';
+// UI Translations Dictionary
+const UI_TRANSLATIONS = {
+    "english": {
+        "title_system_credentials": "SYSTEM CREDENTIALS",
+        "lbl_dashboard_language": "DASHBOARD LANGUAGE",
+        "lbl_character_language": "CHARACTER VOICE LANGUAGE",
+        "lbl_interface_style": "INTERFACE STYLE",
+        "lbl_audio_channels": "AUDIO CHANNELS",
+        "lbl_vocal_synthesis": "Vocal Synthesis Output",
+        "lbl_weather_city": "WEATHER CITY MAP",
+        "lbl_active_workspace": "ACTIVE WORKSPACE PROFILE",
+        "lbl_dark": "Dark",
+        "lbl_light": "Light",
+        "lbl_what_call": "What should I call you?",
+        "lbl_what_name": "What would you like to name me?",
+        "lbl_gemini_key": "Gemini API Key (Optional)",
+        "lbl_init_assistant": "INITIALIZE ASSISTANT ⚡",
+        "lbl_listening": "Suno, main sun raha hoon... Speak now",
+        "lbl_welcome_title": "Welcome to RoboBoy",
+        "lbl_welcome_desc": "Let's personalize your voice assistant to match your environment. Configure your profile below to start.",
+        "placeholder_msg": "Type your request...",
+        "btn_save_settings": "Save Settings",
+        "btn_close": "Close",
+    },
+    "hinglish": {
+        "title_system_credentials": "SYSTEM CREDENTIALS",
+        "lbl_dashboard_language": "DASHBOARD LANGUAGE",
+        "lbl_character_language": "CHARACTER VOICE LANGUAGE",
+        "lbl_interface_style": "INTERFACE STYLE",
+        "lbl_audio_channels": "AUDIO CHANNELS",
+        "lbl_vocal_synthesis": "Vocal Synthesis Output",
+        "lbl_weather_city": "WEATHER CITY MAP",
+        "lbl_active_workspace": "ACTIVE WORKSPACE PROFILE",
+        "lbl_dark": "Dark",
+        "lbl_light": "Light",
+        "lbl_what_call": "Aapka naam kya hai?",
+        "lbl_what_name": "Mera naam kya rakhoge?",
+        "lbl_gemini_key": "Gemini API Key (Optional)",
+        "lbl_init_assistant": "ASSISTANT INITIALIZE KAREIN ⚡",
+        "lbl_listening": "Suno, main sun raha hoon... Speak now",
+        "lbl_welcome_title": "RoboBoy me aapka Swagat hai",
+        "lbl_welcome_desc": "Aapke environment ke hisaab se assistant ko personalize karte hain. Apni settings select karein.",
+        "placeholder_msg": "Kuchh poochhiye ya command dijiye...",
+        "btn_save_settings": "Save Settings",
+        "btn_close": "Close",
+    },
+    "hindi": {
+        "title_system_credentials": "सिस्टम सेटिंग्स",
+        "lbl_dashboard_language": "डैशबोर्ड की भाषा",
+        "lbl_character_language": "3D कैरेक्टर की भाषा",
+        "lbl_interface_style": "इंटरफ़ेस शैली",
+        "lbl_audio_channels": "ऑडियो चैनल",
+        "lbl_vocal_synthesis": "आवाज संश्लेषण आउटपुट",
+        "lbl_weather_city": "मौसम शहर नक्शा",
+        "lbl_active_workspace": "सक्रिय कार्यक्षेत्र प्रोफ़ाइल",
+        "lbl_dark": "डार्क",
+        "lbl_light": "लाइट",
+        "lbl_what_call": "मुझे आपको क्या बुलाना चाहिए?",
+        "lbl_what_name": "आप मेरा नाम क्या रखना चाहेंगे?",
+        "lbl_gemini_key": "जेमिनी एपीआई कुंजी (वैकल्पिक)",
+        "lbl_init_assistant": "असिस्टेंट प्रारंभ करें ⚡",
+        "lbl_listening": "सुन रहा हूँ... बोलिए",
+        "lbl_welcome_title": "रोबोबॉय में आपका स्वागत है",
+        "lbl_welcome_desc": "आइए आपके परिवेश से मेल खाने के लिए आपके वॉयस असिस्टेंट को वैयक्तिकृत करें। प्रारंभ करने के लिए नीचे अपना प्रोफ़ाइल कॉन्फ़िगर करें।",
+        "placeholder_msg": "अपनी आवश्यकता टाइप करें...",
+        "btn_save_settings": "सेटिंग्स सहेजें",
+        "btn_close": "बंद करें",
+    },
+    "german": {
+        "title_system_credentials": "SYSTEM-CREDENTIALS",
+        "lbl_dashboard_language": "DASHBOARD-SPRACHE",
+        "lbl_character_language": "STIMMEN-SPRACHE",
+        "lbl_interface_style": "OBERFLÄCHEN-STIL",
+        "lbl_audio_channels": "AUDIO-KANÄLE",
+        "lbl_vocal_synthesis": "Sprachausgabe aktivieren",
+        "lbl_weather_city": "WETTER-STADTPLAN",
+        "lbl_active_workspace": "AKTIVES WORKSPACE-PROFIL",
+        "lbl_dark": "Dunkel",
+        "lbl_light": "Hell",
+        "lbl_what_call": "Wie soll ich Sie nennen?",
+        "lbl_what_name": "Wie möchten Sie mich nennen?",
+        "lbl_gemini_key": "Gemini-API-Schlüssel (Optional)",
+        "lbl_init_assistant": "ASSISTENT INITIALISIEREN ⚡",
+        "lbl_listening": "Ich höre zu... Bitte sprechen",
+        "lbl_welcome_title": "Willkommen bei RoboBoy",
+        "lbl_welcome_desc": "Lassen Sie uns Ihren Sprachassistenten personalisieren. Konfigurieren Sie unten Ihr Profil, um zu starten.",
+        "placeholder_msg": "Schreiben Sie Ihre Anfrage...",
+        "btn_save_settings": "Speichern",
+        "btn_close": "Schließen",
+    },
+    "chinese": {
+        "title_system_credentials": "系统凭证与设置",
+        "lbl_dashboard_language": "仪表盘语言",
+        "lbl_character_language": "角色语音语言",
+        "lbl_interface_style": "界面风格风格",
+        "lbl_audio_channels": "音频通道",
+        "lbl_vocal_synthesis": "启用语音合成输出",
+        "lbl_weather_city": "天气定位城市",
+        "lbl_active_workspace": "活跃工作区个人资料",
+        "lbl_dark": "深色",
+        "lbl_light": "浅色",
+        "lbl_what_call": "我该如何称呼您？",
+        "lbl_what_name": "您想给我起什么名字？",
+        "lbl_gemini_key": "Gemini API 密钥 (可选)",
+        "lbl_init_assistant": "初始化助理 ⚡",
+        "lbl_listening": "正在倾听... 请开始说话",
+        "lbl_welcome_title": "欢迎使用 RoboBoy",
+        "lbl_welcome_desc": "让我们个性化您的语音助理以匹配您的环境。在下方配置您的个人资料以开始使用。",
+        "placeholder_msg": "输入您的请求...",
+        "btn_save_settings": "保存设置",
+        "btn_close": "关闭",
+    },
+    "bhojpuri": {
+        "title_system_credentials": "सिस्टम सेटिंग",
+        "lbl_dashboard_language": "डैशबोर्ड के भाषा",
+        "lbl_character_language": "3D कैरेक्टर के भाषा",
+        "lbl_interface_style": "इंटरफ़ेस के स्टाइल",
+        "lbl_audio_channels": "ऑडियो चैनल",
+        "lbl_vocal_synthesis": "बोले वाला आउटपुट",
+        "lbl_weather_city": "मौसम शहर",
+        "lbl_active_workspace": "चालू प्रोफाइल",
+        "lbl_dark": "अँधेरिया",
+        "lbl_light": "अँजोर",
+        "lbl_what_call": "हम रउआ का कह के बुलाईं?",
+        "lbl_what_name": "रउआ हमार का नाम रखल चाहत बानी?",
+        "lbl_gemini_key": "जेमिनी एपीआई कुंजी (चाही तँ)",
+        "lbl_init_assistant": "असिस्टेंट चालू करीं ⚡",
+        "lbl_listening": "सुनात बानी... बोलीं",
+        "lbl_welcome_title": "रोबोबॉय में रउआ स्वागत बा",
+        "lbl_welcome_desc": "आईं रउआ पसंद के हिसाब से असिस्टेंट के प्रोफाइल सेट कइल जाव।",
+        "placeholder_msg": "कुछ लिख के पूछीं...",
+        "btn_save_settings": "सेटिंग सहेजीं",
+        "btn_close": "बंद करीं",
+    },
+    "maithili": {
+        "title_system_credentials": "सिस्टमक सेटिंग",
+        "lbl_dashboard_language": "डैशबोर्डक भाषा",
+        "lbl_character_language": "3D पात्रक भाषा",
+        "lbl_interface_style": "इंटरफ़ेसक शैली",
+        "lbl_audio_channels": "ऑडियो चैनल",
+        "lbl_vocal_synthesis": "आवाज आउटपुट",
+        "lbl_weather_city": "मौसम शहर",
+        "lbl_active_workspace": "सक्रिय प्रोफाइल",
+        "lbl_dark": "डार्क",
+        "lbl_light": "लाइट",
+        "lbl_what_call": "हम अहाँ के की कहि क' बाजी?",
+        "lbl_what_name": "अहाँ हमार की नाम रखऽ चाहैत छी?",
+        "lbl_gemini_key": "जेमिनी एपीआई कुंजी (वैकल्पिक)",
+        "lbl_init_assistant": "असिस्टेंट प्रारंभ करू ⚡",
+        "lbl_listening": "सुनि रहल छी... बाजू",
+        "lbl_welcome_title": "रोबोबॉय में अपनेक स्वागत अछि",
+        "lbl_welcome_desc": "आऊ अपनेक पसंद के अनुसार असिस्टेंट के सेटिंग कयल जाय।",
+        "placeholder_msg": "किछु लिखि क' पुछू...",
+        "btn_save_settings": "सेटिंग सुरक्षित करू",
+        "btn_close": "बंद करू",
     }
-    saveSettingsState();
+};
+
+function getSpeechLangCode(lang) {
+    const langMap = {
+        "english": "en-US",
+        "hinglish": "hi-IN",
+        "hindi": "hi-IN",
+        "german": "de-DE",
+        "chinese": "zh-CN",
+        "bhojpuri": "hi-IN",
+        "maithili": "hi-IN"
+    };
+    return langMap[lang.toLowerCase()] || "en-US";
 }
 
-async function saveSettingsState() {
+function localizeUI(lang) {
+    const translations = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS["english"];
+    
+    // System Credentials Title
+    const titleEl = document.querySelector('#settingsDrawer h2');
+    if (titleEl && translations["title_system_credentials"]) titleEl.textContent = translations["title_system_credentials"];
+    
+    // Labels
+    const lblDbLang = document.getElementById('lblDashboardLanguage');
+    if (lblDbLang) lblDbLang.textContent = translations["lbl_dashboard_language"];
+    
+    const lblCharLang = document.getElementById('lblCharacterLanguage');
+    if (lblCharLang) lblCharLang.textContent = translations["lbl_character_language"];
+    
+    const lblStyle = document.querySelector('#settingsDrawer .control-group:nth-of-type(3) label');
+    if (lblStyle) lblStyle.textContent = translations["lbl_interface_style"];
+    
+    const lblAudio = document.querySelector('#settingsDrawer .control-group:nth-of-type(4) label');
+    if (lblAudio) lblAudio.textContent = translations["lbl_audio_channels"];
+    
+    const lblVocal = document.querySelector('label[for="ttsEnabled"]');
+    if (lblVocal) lblVocal.textContent = translations["lbl_vocal_synthesis"];
+    
+    // Setup wizard translations
+    const setupTitle = document.querySelector('.setup-card h2');
+    if (setupTitle) setupTitle.textContent = translations["lbl_welcome_title"];
+    
+    const setupDesc = document.querySelector('.setup-card p');
+    if (setupDesc) setupDesc.textContent = translations["lbl_welcome_desc"];
+    
+    const lblSetupCall = document.querySelector('.setup-card .control-group:nth-of-type(1) label');
+    if (lblSetupCall) lblSetupCall.textContent = translations["lbl_what_call"];
+    
+    const lblSetupName = document.querySelector('.setup-card .control-group:nth-of-type(2) label');
+    if (lblSetupName) lblSetupName.textContent = translations["lbl_what_name"];
+    
+    const lblSetupDb = document.getElementById('lblSetupDashboardLang');
+    if (lblSetupDb) lblSetupDb.textContent = translations["lbl_dashboard_language"];
+    
+    const lblSetupChar = document.getElementById('lblSetupCharacterLang');
+    if (lblSetupChar) lblSetupChar.textContent = translations["lbl_character_language"];
+    
+    const lblSetupGemini = document.querySelector('.setup-card .control-group:nth-of-type(5) label');
+    if (lblSetupGemini) lblSetupGemini.textContent = translations["lbl_gemini_key"];
+    
+    const btnInit = document.querySelector('.save-settings-btn span');
+    if (btnInit) btnInit.textContent = translations["lbl_init_assistant"];
+    
+    // Chat placeholder
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) chatInput.placeholder = translations["placeholder_msg"];
+    
+    // Listening text
+    const listeningEl = document.querySelector('.listening-status-text');
+    if (listeningEl) listeningEl.textContent = translations["lbl_listening"];
+}
+
+async function updateDashboardLanguage(lang) {
+    dashboardLanguage = lang;
+    localizeUI(lang);
+    
+    // Sync to backend config
     try {
         await fetch('/api/config', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ dashboard_language: lang })
+        });
+    } catch(e) {
+        console.error("Failed to sync dashboard language to backend", e);
+    }
+}
+
+async function updateCharacterLanguage(lang) {
+    characterLanguage = lang;
+    currentLanguage = lang;
+    
+    // Update SpeechRecognition BCP-47 code dynamically
+    if (speechRecognition) {
+        speechRecognition.lang = getSpeechLangCode(lang);
+    }
+    
+    // Sync to backend config
+    try {
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                language: currentLanguage,
-                theme: currentTheme
+                character_language: lang,
+                language: lang
             })
         });
-    } catch (e) {
-        console.error("Failed to sync settings with server.");
+    } catch(e) {
+        console.error("Failed to sync character language to backend", e);
     }
 }
 
@@ -475,6 +882,88 @@ function toggleVoiceInput() {
 }
 
 // ==========================================
+// VOICE PRESET FUNCTIONS
+// ==========================================
+function initVoicePresets() {
+    selectVoicePreset(activeVoicePreset, false);
+}
+
+function selectVoicePreset(presetName, speakTest = true) {
+    if (!voicePresets[presetName]) return;
+    
+    activeVoicePreset = presetName;
+    localStorage.setItem('activeVoicePreset', presetName);
+    
+    document.querySelectorAll('.voice-select-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById(`voice-btn-${presetName}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
+    const presetSelect = document.getElementById('voicePresetSelect');
+    if (presetSelect) {
+        presetSelect.value = presetName;
+    }
+    
+    const preset = voicePresets[presetName];
+    const speedSlider = document.getElementById('voiceSpeed');
+    const pitchSlider = document.getElementById('voicePitch');
+    const speedVal = document.getElementById('speedVal');
+    const pitchVal = document.getElementById('pitchVal');
+    
+    if (speedSlider && speedVal) {
+        speedSlider.value = preset.rate;
+        speedVal.innerText = preset.rate.toFixed(1) + 'x';
+    }
+    if (pitchSlider && pitchVal) {
+        pitchSlider.value = preset.pitch;
+        pitchVal.innerText = preset.pitch.toFixed(2) + 'x';
+    }
+    
+    if (speakTest) {
+        speakText(`Testing ${preset.name} voice.`);
+    }
+}
+
+function findVoiceByGenderAndLang(gender, lang) {
+    if (!synth) return null;
+    const voices = synth.getVoices();
+    if (!voices || voices.length === 0) return null;
+    
+    let langFiltered = [];
+    if (lang === 'hinglish') {
+        langFiltered = voices.filter(v => v.lang.includes('hi') || v.name.toLowerCase().includes('google hindi') || v.name.toLowerCase().includes('lekha'));
+    } else {
+        langFiltered = voices.filter(v => v.lang.includes('en'));
+    }
+    
+    if (langFiltered.length === 0) {
+        langFiltered = voices;
+    }
+    
+    const femaleKeywords = ['female', 'zira', 'samantha', 'karen', 'moira', 'tessa', 'veena', 'victoria', 'susan', 'hazel', 'elizabeth', 'serena', 'salli', 'joanna', 'ivy', 'kendra', 'kimberly', 'nicole', 'lekha'];
+    const maleKeywords = ['male', 'david', 'ravi', 'george', 'daniel', 'oliver', 'rishi', 'alex', 'fred', 'tom', 'guy', 'russell', 'joey', 'justin', 'matthew'];
+    
+    let genderFiltered = langFiltered.filter(v => {
+        const name = v.name.toLowerCase();
+        if (gender === 'female') {
+            return femaleKeywords.some(kw => name.includes(kw)) && !maleKeywords.some(kw => name.includes(kw));
+        } else if (gender === 'male') {
+            return maleKeywords.some(kw => name.includes(kw)) && !femaleKeywords.some(kw => name.includes(kw));
+        }
+        return true;
+    });
+    
+    if (genderFiltered.length === 0) {
+        genderFiltered = langFiltered;
+    }
+    
+    return genderFiltered[0] || voices[0];
+}
+
+// ==========================================
 // VOICE SYNTHESIS RESPONDER (Text to Speech)
 // ==========================================
 function speakText(text) {
@@ -487,18 +976,10 @@ function speakText(text) {
     spokenText = spokenText.replace(/[*#`_\-]/g, ""); 
     
     const utterance = new SpeechSynthesisUtterance(spokenText);
-    const voices = synth.getVoices();
-    let selectedVoice = null;
     
-    if (currentLanguage === 'hinglish') {
-        selectedVoice = voices.find(v => v.lang.includes('hi') || v.name.toLowerCase().includes('google hindi') || v.name.toLowerCase().includes('lekha'));
-    }
-    
-    if (!selectedVoice) {
-        selectedVoice = voices.find(v => v.lang.includes('en-GB') || v.name.toLowerCase().includes('google uk english')) ||
-                        voices.find(v => v.lang.includes('en')) || 
-                        voices[0];
-    }
+    const preset = voicePresets[activeVoicePreset];
+    const gender = preset ? preset.gender : 'female';
+    const selectedVoice = findVoiceByGenderAndLang(gender, currentLanguage);
     
     if (selectedVoice) {
         utterance.voice = selectedVoice;
@@ -599,14 +1080,21 @@ function clearChat() {
     conversationCount = 1;
     updateSidebarBadges();
     
+    let charName = currentAssistantName;
+    if (activeCharacter === 'resin_robot') {
+        charName = 'Voxel';
+    } else if (activeCharacter === 'cyberpunk_anime') {
+        charName = 'Huo Yuner';
+    }
+    
     const messagesCanvas = document.getElementById('chatMessages');
     messagesCanvas.innerHTML = `
         <div class="chat-bubble assistant animate-fade-in">
             <div class="bubble-avatar-img-container">
-                <img src="/static/images/lina.png" class="bubble-avatar-img" alt="${currentAssistantName}">
+                <img src="${getCharacterImagePath()}" class="bubble-avatar-img" alt="${charName}">
             </div>
             <div class="bubble-body">
-                <p>System initialized. I am <strong>${currentAssistantName}</strong> — your personal AI Workspace Assistant ⚡. How can I help you today, ${currentUserName}?</p>
+                <p>System initialized. I am <strong>${charName}</strong> — your personal AI Workspace Assistant ⚡. How can I help you today, ${currentUserName}?</p>
             </div>
         </div>
     `;
@@ -652,9 +1140,13 @@ function appendChatBubble(sender, text) {
     
     const formattedText = parseMarkdown(text);
     if (sender === 'assistant') {
+        let charName = currentAssistantName;
+        if (activeCharacter === 'resin_robot') charName = 'Voxel';
+        else if (activeCharacter === 'cyberpunk_anime') charName = 'Huo Yuner';
+        
         bubble.innerHTML = `
             <div class="bubble-avatar-img-container">
-                <img src="/static/images/lina.png" class="bubble-avatar-img" alt="Lina">
+                <img src="${getCharacterImagePath()}" class="bubble-avatar-img" alt="${charName}">
             </div>
             <div class="bubble-body">${formattedText}</div>
         `;
@@ -675,9 +1167,13 @@ function appendScreenshotBubble(text, imagePath) {
     
     const cacheBusterPath = `${imagePath}?t=${new Date().getTime()}`;
     
+    let charName = currentAssistantName;
+    if (activeCharacter === 'resin_robot') charName = 'Voxel';
+    else if (activeCharacter === 'cyberpunk_anime') charName = 'Huo Yuner';
+    
     bubble.innerHTML = `
         <div class="bubble-avatar-img-container">
-            <img src="/static/images/lina.png" class="bubble-avatar-img" alt="Lina">
+            <img src="${getCharacterImagePath()}" class="bubble-avatar-img" alt="${charName}">
         </div>
         <div class="bubble-body">
             <p>${text}</p>

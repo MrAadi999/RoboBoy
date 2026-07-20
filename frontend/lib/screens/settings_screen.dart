@@ -33,11 +33,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _saveUrl() {
+    final state = Provider.of<AppState>(context, listen: false);
     final url = _urlController.text.trim();
     if (url.isNotEmpty) {
-      Provider.of<AppState>(context, listen: false).setBackendUrl(url);
+      state.setBackendUrl(url);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Backend URL updated to: $url")),
+        SnackBar(content: Text("${state.translate("url_updated")} $url")),
       );
     }
   }
@@ -49,20 +50,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings & Controls"),
+        title: Text(state.translate("settings_title")),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           // Section: Routing Settings
-          _buildSectionHeader(theme, "Assistant Routing Modes"),
+          _buildSectionHeader(theme, state.translate("routing_modes")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 RadioListTile<String>(
-                  title: const Text("Smart Router (Auto)"),
-                  subtitle: const Text("Automatically routes based on query complexity and internet speed."),
+                  title: Text(state.translate("smart_router")),
+                  subtitle: Text(state.translate("smart_router_sub")),
                   value: "auto",
                   groupValue: state.currentModeOverride,
                   activeColor: AadiTheme.primarySaffron,
@@ -70,8 +71,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const Divider(height: 1),
                 RadioListTile<String>(
-                  title: const Text("Fugu Mode Only (Cloud)"),
-                  subtitle: const Text("Forces all reasoning to Claude API (Requires internet)."),
+                  title: Text(state.translate("fugu_mode")),
+                  subtitle: Text(state.translate("fugu_mode_sub")),
                   value: "fugu",
                   groupValue: state.currentModeOverride,
                   activeColor: AadiTheme.primarySaffron,
@@ -79,8 +80,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const Divider(height: 1),
                 RadioListTile<String>(
-                  title: const Text("Odysseus Mode Only (Local)"),
-                  subtitle: const Text("Forces all queries to local Ollama. Private and offline."),
+                  title: Text(state.translate("odysseus_mode")),
+                  subtitle: Text(state.translate("odysseus_mode_sub")),
                   value: "odysseus",
                   groupValue: state.currentModeOverride,
                   activeColor: AadiTheme.primarySaffron,
@@ -92,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Personalization Settings
-          _buildSectionHeader(theme, "Profile & Assistant Personalization"),
+          _buildSectionHeader(theme, state.translate("profile_header")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -101,19 +102,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   TextField(
                     controller: _userNameController,
-                    decoration: const InputDecoration(
-                      labelText: "Your Name",
-                      hintText: "What should the assistant call you?",
-                      prefixIcon: Icon(Icons.person),
+                    decoration: InputDecoration(
+                      labelText: state.translate("your_name"),
+                      hintText: state.translate("your_name_hint"),
+                      prefixIcon: const Icon(Icons.person),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _assistantNameController,
-                    decoration: const InputDecoration(
-                      labelText: "Assistant Name",
-                      hintText: "What would you like to name the assistant?",
-                      prefixIcon: Icon(Icons.smart_toy),
+                    decoration: InputDecoration(
+                      labelText: state.translate("assistant_name"),
+                      hintText: state.translate("assistant_name_hint"),
+                      prefixIcon: const Icon(Icons.smart_toy),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -133,11 +134,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           assistantNameSetting: aName,
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Names updated successfully!")),
+                          SnackBar(content: Text(state.translate("names_updated"))),
                         );
                       }
                     },
-                    child: const Text("Save Custom Names"),
+                    child: Text(state.translate("save_names")),
                   ),
                 ],
               ),
@@ -146,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Explicit Tone & Language Preference (Phase 2)
-          _buildSectionHeader(theme, "Explicit AI Personality & Style"),
+          _buildSectionHeader(theme, state.translate("ai_style_header")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -154,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   ListTile(
-                    title: const Text("Assistant Tone"),
+                    title: Text(state.translate("assistant_tone")),
                     subtitle: Text("Current: ${state.tone.toUpperCase()}"),
                     trailing: DropdownButton<String>(
                       value: state.tone,
@@ -171,25 +172,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    title: const Text("Primary Language"),
-                    subtitle: Text("Current: ${state.language.toUpperCase()}"),
+                    title: Text(state.translate("dash_lang")),
+                    subtitle: Text("Current: ${state.dashboardLanguage.toUpperCase()}"),
                     trailing: DropdownButton<String>(
-                      value: state.language,
+                      value: state.dashboardLanguage.toLowerCase(),
                       items: const [
-                        DropdownMenuItem(value: "hinglish", child: Text("Hinglish (Hindi-English)")),
                         DropdownMenuItem(value: "english", child: Text("English")),
+                        DropdownMenuItem(value: "hinglish", child: Text("Hinglish")),
+                        DropdownMenuItem(value: "hindi", child: Text("Hindi (हिन्दी)")),
+                        DropdownMenuItem(value: "german", child: Text("German (Deutsch)")),
+                        DropdownMenuItem(value: "chinese", child: Text("Chinese (中文)")),
+                        DropdownMenuItem(value: "bhojpuri", child: Text("Bhojpuri (भोजपुरी)")),
+                        DropdownMenuItem(value: "maithili", child: Text("Maithili (मैथिली)")),
                       ],
                       onChanged: (val) {
                         if (val != null) {
-                          state.updatePreferenceSetting(langSetting: val);
+                          state.updatePreferenceSetting(dashboardLangSetting: val);
                         }
                       },
                     ),
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    title: const Text("Hinglish Implicit Ratio"),
-                    subtitle: const Text("Learned Hinglish speech pattern mix"),
+                    title: Text(state.translate("char_lang")),
+                    subtitle: Text("Current: ${state.characterLanguage.toUpperCase()}"),
+                    trailing: DropdownButton<String>(
+                      value: state.characterLanguage.toLowerCase(),
+                      items: const [
+                        DropdownMenuItem(value: "english", child: Text("English")),
+                        DropdownMenuItem(value: "hinglish", child: Text("Hinglish")),
+                        DropdownMenuItem(value: "hindi", child: Text("Hindi (हिन्दी)")),
+                        DropdownMenuItem(value: "german", child: Text("German (Deutsch)")),
+                        DropdownMenuItem(value: "chinese", child: Text("Chinese (中文)")),
+                        DropdownMenuItem(value: "bhojpuri", child: Text("Bhojpuri (भोजपुरी)")),
+                        DropdownMenuItem(value: "maithili", child: Text("Maithili (मैथिली)")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          state.updatePreferenceSetting(characterLangSetting: val);
+                        }
+                      },
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    title: Text(state.translate("implicit_ratio")),
+                    subtitle: Text(state.translate("implicit_ratio_sub")),
                     trailing: Text(
                       "${(state.hinglishRatio * 100).toStringAsFixed(0)}%",
                       style: const TextStyle(fontWeight: FontWeight.bold, color: AadiTheme.primarySaffron),
@@ -202,38 +230,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Granular Permissions (Phase 2 Hardening)
-          _buildSectionHeader(theme, "Granular Security Toggles"),
+          _buildSectionHeader(theme, state.translate("security_header")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text("Google Calendar Sync"),
-                  subtitle: const Text("Allow Aadi to view and schedule calendar events."),
+                  title: Text(state.translate("cal_sync")),
+                  subtitle: Text(state.translate("cal_sync_sub")),
                   value: state.permissionCalendar,
                   activeColor: AadiTheme.primarySaffron,
                   onChanged: (val) => state.updatePreferenceSetting(permCalendar: val),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text("Gmail Access"),
-                  subtitle: const Text("Allow Aadi to draft email replies and read inbox."),
+                  title: Text(state.translate("gmail_access")),
+                  subtitle: Text(state.translate("gmail_access_sub")),
                   value: state.permissionEmail,
                   activeColor: AadiTheme.primarySaffron,
                   onChanged: (val) => state.updatePreferenceSetting(permEmail: val),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text("Real-time Location Alerts"),
-                  subtitle: const Text("Allow location access for traffic adjusted reminders."),
+                  title: Text(state.translate("loc_alerts")),
+                  subtitle: Text(state.translate("loc_alerts_sub")),
                   value: state.permissionLocation,
                   activeColor: AadiTheme.primarySaffron,
                   onChanged: (val) => state.updatePreferenceSetting(permLocation: val),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text("Business Orders Sync"),
-                  subtitle: const Text("Allow accessing e-commerce shipment and retail logistics data."),
+                  title: Text(state.translate("business_sync")),
+                  subtitle: Text(state.translate("business_sync_sub")),
                   value: state.permissionBusiness,
                   activeColor: AadiTheme.primarySaffron,
                   onChanged: (val) => state.updatePreferenceSetting(permBusiness: val),
@@ -243,8 +271,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Section: Server Configuration
-          _buildSectionHeader(theme, "FastAPI Backend Connection"),
+          // Section: Server Connection
+          _buildSectionHeader(theme, state.translate("backend_header")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -254,8 +282,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   TextField(
                     controller: _urlController,
-                    decoration: const InputDecoration(
-                      labelText: "Backend Base URL",
+                    decoration: InputDecoration(
+                      labelText: state.translate("backend_url"),
                       hintText: "e.g., http://localhost:8000 or http://10.0.2.2:8000",
                     ),
                   ),
@@ -263,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ElevatedButton.icon(
                     onPressed: _saveUrl,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text("Save URL"),
+                    label: Text(state.translate("save_url")),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AadiTheme.primarySaffron,
                       foregroundColor: Colors.white,
@@ -277,21 +305,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Display & Profile
-          _buildSectionHeader(theme, "Preferences"),
+          _buildSectionHeader(theme, state.translate("pref_header")),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text("Dark Theme Mode"),
+                  title: Text(state.translate("dark_mode")),
                   value: state.isDarkTheme,
                   activeColor: AadiTheme.primarySaffron,
                   onChanged: (val) => state.toggleTheme(),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text("User Memory Profile"),
-                  subtitle: Text("${state.memories.length} facts remembered"),
+                  title: Text(state.translate("memory_profile")),
+                  subtitle: Text("${state.memories.length} ${state.translate("facts_count")}"),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.pushNamed(context, '/dashboard');
@@ -309,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context); // Go back (AuthScreen handles screen swap)
             },
             icon: const Icon(Icons.logout),
-            label: const Text("Logout Session"),
+            label: Text(state.translate("logout")),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,

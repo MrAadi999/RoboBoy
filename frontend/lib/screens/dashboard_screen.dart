@@ -22,11 +22,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (success) {
       _factController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("New context saved to memory.")),
+        SnackBar(content: Text(state.translate("new_context_saved"))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to save memory. Check backend.")),
+        SnackBar(content: Text(state.translate("failed_save_memory"))),
       );
     }
   }
@@ -36,7 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final success = await state.deleteOldMemory(id);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Memory deleted.")),
+        SnackBar(content: Text(state.translate("memory_deleted"))),
       );
     }
   }
@@ -57,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Memory Profile"),
+        title: Text(state.translate("memory_title")),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -87,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Namaste, $username!",
+                    "${state.translate("namaste")}, $username!",
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -95,9 +95,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    "Main aapki saari preferences aur details yaad rakhta hoon taaki mere replies personalized hon.",
-                    style: TextStyle(
+                  Text(
+                    state.translate("memory_desc"),
+                    style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFFE5E7EB), // Soft white/grey
                       height: 1.4,
@@ -110,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Form to add a new memory
             Text(
-              "Add details about yourself:",
+              state.translate("add_details"),
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
@@ -119,9 +119,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: TextField(
                     controller: _factController,
-                    decoration: const InputDecoration(
-                      hintText: "e.g., I live in New Delhi or I prefer coffee",
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: InputDecoration(
+                      hintText: state.translate("add_details_hint"),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
@@ -149,11 +149,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Remembered Facts",
+                  state.translate("remembered_facts"),
                   style: theme.textTheme.titleMedium,
                 ),
                 Text(
-                  "${state.memories.length} facts total",
+                  "${state.memories.length} ${state.translate("facts_total")}",
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -166,16 +166,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.psychology_outlined, size: 48, color: Colors.grey),
-                        SizedBox(height: 12),
+                      children: [
+                        const Icon(Icons.psychology_outlined, size: 48, color: Colors.grey),
+                        const SizedBox(height: 12),
                         Text(
-                          "No memory data found.",
-                          style: TextStyle(color: Colors.grey),
+                          state.translate("no_memory"),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                         Text(
-                          "Tell Aadi your preferences to start saving context!",
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          state.translate("tell_aadi"),
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
                     ),

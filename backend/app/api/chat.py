@@ -41,13 +41,24 @@ async def chat_interaction(
         # 4. Synthesize personalized instructions based on user style
         u_name = prefs.user_name or "Aditya"
         a_name = prefs.assistant_name or "Aadi AI"
+        char_lang = (prefs.character_language or "hinglish").lower()
         style_instruction = (
-            f"User Preference Settings: Language={prefs.language}, Tone={prefs.tone}. "
+            f"User Preference Settings: Character Language={char_lang}, Tone={prefs.tone}. "
             f"Your assistant name is {a_name}. The user's name is {u_name}. "
             f"Address yourself as {a_name} and address the user as {u_name}. "
         )
-        if prefs.language == "hinglish":
-            style_instruction += "Respond in Hinglish (natural Hindi + English written in Roman characters). "
+        if char_lang == "hinglish":
+            style_instruction += "Respond in Hinglish (natural Hindi + English written in Roman/Latin characters). "
+        elif char_lang == "hindi":
+            style_instruction += "Respond in proper, grammatically correct Hindi using the Devanagari script (हिंदी script). "
+        elif char_lang == "german":
+            style_instruction += "Respond in proper German (Deutsch). "
+        elif char_lang == "chinese":
+            style_instruction += "Respond in proper Chinese (Simplified Mandarin / 中文). "
+        elif char_lang == "bhojpuri":
+            style_instruction += "Respond in Bhojpuri language using the Devanagari script (भोजपुरी). "
+        elif char_lang == "maithili":
+            style_instruction += "Respond in Maithili language using the Devanagari script (मैथिली). "
         else:
             style_instruction += "Respond in clear, grammatical, professional English. "
             

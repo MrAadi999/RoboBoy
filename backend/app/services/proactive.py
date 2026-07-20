@@ -18,7 +18,7 @@ class ProactiveEngine:
         """
         # Fetch preferences
         prefs = db.query(UserPreferences).filter(UserPreferences.user_id == user_id).first()
-        lang = prefs.language if prefs else "hinglish"
+        lang = prefs.character_language if prefs else "hinglish"
         tone = prefs.tone if prefs else "formal"
         
         # 1. Fetch Weather (dynamically looking up city from memory and using OpenWeather API)
@@ -102,13 +102,54 @@ class ProactiveEngine:
             except Exception as ex:
                 logger.error(f"Failed to generate brief via LLM: {ex}")
                 # Clean fallback response in preferred language
-                if lang == "hinglish":
+                lang_lower = lang.lower()
+                if lang_lower == "hinglish":
                     response_text = (
                         f"Namaste Aditya! Aapka Daily Briefing haazir hai. 🌤️\n\n"
                         f"**Mausam**: {weather_info}\n"
                         f"**Aaj ke Meetings**:\n{meetings_text}\n"
                         f"**Order Status**:\n{orders_text}\n\n"
                         f"Have a great day ahead!"
+                    )
+                elif lang_lower == "hindi":
+                    response_text = (
+                        f"नमस्ते Aditya! आपका दैनिक विवरण तैयार है। 🌤️\n\n"
+                        f"**मौसम**: {weather_info}\n"
+                        f"**आज की बैठकें**:\n{meetings_text}\n"
+                        f"**ऑर्डर की स्थिति**:\n{orders_text}\n\n"
+                        f"आपका दिन शुभ हो!"
+                    )
+                elif lang_lower == "german":
+                    response_text = (
+                        f"Hallo Aditya! Hier ist Ihr täglicher Bericht. 🌤️\n\n"
+                        f"**Wetter**: {weather_info}\n"
+                        f"**Heutiger Zeitplan**:\n{meetings_text}\n"
+                        f"**Bestellstatus**:\n{orders_text}\n\n"
+                        f"Einen schönen Tag noch!"
+                    )
+                elif lang_lower == "chinese":
+                    response_text = (
+                        f"你好 Aditya！这是您的每日简报。 🌤️\n\n"
+                        f"**天气**: {weather_info}\n"
+                        f"**今日日程**:\n{meetings_text}\n"
+                        f"**订单状态**:\n{orders_text}\n\n"
+                        f"祝您今天过得愉快！"
+                    )
+                elif lang_lower == "bhojpuri":
+                    response_text = (
+                        f"प्रणाम Aditya! रउआ खातिर आजु के दैनिक समाचार हाजिर बा। 🌤️\n\n"
+                        f"**मौसम**: {weather_info}\n"
+                        f"**आजु के बैठक**:\n{meetings_text}\n"
+                        f"**ऑर्डर के स्थिति**:\n{orders_text}\n\n"
+                        f"रउआ दिन मंगलमय होखे!"
+                    )
+                elif lang_lower == "maithili":
+                    response_text = (
+                        f"प्रणाम Aditya! अपनेक दैनिक संक्षिप्त विवरण प्रस्तुत अछि। 🌤️\n\n"
+                        f"**मौसम**: {weather_info}\n"
+                        f"**आबक बैठक**:\n{meetings_text}\n"
+                        f"**ऑर्डर के स्थिति**:\n{orders_text}\n\n"
+                        f"अपनेक दिन शुभ हो!"
                     )
                 else:
                     response_text = (

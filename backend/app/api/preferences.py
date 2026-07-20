@@ -15,6 +15,8 @@ def get_or_create_preferences(user_id: int, db: Session) -> UserPreferences:
             user_id=user_id,
             tone="formal",
             language="hinglish",
+            dashboard_language="english",
+            character_language="hinglish",
             hinglish_ratio=0.5,
             preferred_length="medium",
             permission_calendar=False,
@@ -56,6 +58,11 @@ def update_preferences(
         prefs.tone = payload.tone
     if payload.language is not None:
         prefs.language = payload.language
+    if payload.dashboard_language is not None:
+        prefs.dashboard_language = payload.dashboard_language
+    if payload.character_language is not None:
+        prefs.character_language = payload.character_language
+        prefs.language = payload.character_language # Sync for backward compatibility
     if payload.permission_calendar is not None:
         prefs.permission_calendar = payload.permission_calendar
     if payload.permission_email is not None:

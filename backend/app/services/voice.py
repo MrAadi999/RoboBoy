@@ -54,7 +54,7 @@ class VoiceService:
                 "contents": [{
                     "parts": [
                         {"inlineData": {"mimeType": mime_type, "data": encoded_audio}},
-                        {"text": "Transcribe this audio file exactly as spoken. If it is in Hinglish or Hindi, transcribe the spoken Hinglish/Hindi words in Latin script."}
+                        {"text": "Transcribe this audio file exactly as spoken. It could be in English, Hinglish, Hindi, German, Chinese, Bhojpuri, or Maithili. Please transcribe in the corresponding language/script (or Latin/romanized script for Hinglish)."}
                     ]
                 }]
             }
@@ -100,7 +100,17 @@ class VoiceService:
         Returns: (audio_bytes, mime_type)
         """
         import urllib.parse
-        lang_code = "hi" if language == "hinglish" else "en"
+        
+        lang_map = {
+            "english": "en",
+            "hinglish": "hi",
+            "hindi": "hi",
+            "german": "de",
+            "chinese": "zh-CN",
+            "bhojpuri": "bho",
+            "maithili": "mai"
+        }
+        lang_code = lang_map.get(language.lower(), "en")
         
         # 1. Try Online Google TTS
         try:
@@ -128,13 +138,23 @@ class VoiceService:
                 # We must run pyttsx3 in a subprocess or serialize to a file
                 engine = pyttsx3.init()
                 
-                # Configure Hinglish Lekha voice if macOS and available
-                if sys.platform == "darwin" and language == "hinglish":
+                # Configure voices if available
+                if sys.platform == "darwin":
+                    lang_lower = language.lower()
                     voices = engine.getProperty('voices')
-                    for voice in voices:
-                        if "lekha" in voice.name.lower():
-                            engine.setProperty('voice', voice.id)
-                            break
+                    target_voice = None
+                    if lang_lower in ["hinglish", "hindi", "bhojpuri", "maithili"]:
+                        target_voice = "lekha"
+                    elif lang_lower == "german":
+                        target_voice = "anna"
+                    elif lang_lower == "chinese":
+                        target_voice = "tingting"
+                    
+                    if target_voice:
+                        for voice in voices:
+                            if target_voice in voice.name.lower():
+                                engine.setProperty('voice', voice.id)
+                                break
                             
                 engine.save_to_file(text, out_file)
                 engine.runAndWait()
@@ -156,8 +176,13 @@ class VoiceService:
                     os.remove(out_file)
 
                 voice_option = []
-                if language == "hinglish":
+                lang_lower = language.lower()
+                if lang_lower in ["hinglish", "hindi", "bhojpuri", "maithili"]:
                     voice_option = ["-v", "Lekha"]
+                elif lang_lower == "german":
+                    voice_option = ["-v", "Anna"]
+                elif lang_lower == "chinese":
+                    voice_option = ["-v", "Tingting"]
                 
                 subprocess.run(["say"] + voice_option + ["-o", out_file, text], check=True, capture_output=True)
                 
@@ -166,7 +191,7 @@ class VoiceService:
                         audio_data = f.read()
                     return audio_data, "audio/aiff"
             except Exception as ex:
-                logger.error(f"Native macOS offline TTS failed: {ex}")
+                logger.error(f"macOS native 'say' command failed: {ex}")
 
         # Final absolute fallback: return dummy empty wave file
         dummy_wav = b'RIFF$\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00'

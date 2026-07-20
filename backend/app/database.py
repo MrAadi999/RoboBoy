@@ -62,7 +62,9 @@ class UserPreferences(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     tone = Column(String, default="formal")  # "formal" or "casual"
-    language = Column(String, default="hinglish")  # "hinglish" or "english"
+    language = Column(String, default="hinglish")  # "hinglish" or "english" (deprecated, kept for compat)
+    dashboard_language = Column(String, default="english") # UI language
+    character_language = Column(String, default="hinglish") # TTS / voice / chat response language
     hinglish_ratio = Column(Float, default=0.5)  # implicit learning metric (0.0 to 1.0)
     preferred_length = Column(String, default="medium")  # "short", "medium", "long"
     permission_calendar = Column(Boolean, default=False)
@@ -205,6 +207,10 @@ def init_db():
             cursor.execute("ALTER TABLE user_preferences ADD COLUMN user_name VARCHAR DEFAULT 'Aditya'")
         if "assistant_name" not in columns:
             cursor.execute("ALTER TABLE user_preferences ADD COLUMN assistant_name VARCHAR DEFAULT 'Aadi AI'")
+        if "dashboard_language" not in columns:
+            cursor.execute("ALTER TABLE user_preferences ADD COLUMN dashboard_language VARCHAR DEFAULT 'english'")
+        if "character_language" not in columns:
+            cursor.execute("ALTER TABLE user_preferences ADD COLUMN character_language VARCHAR DEFAULT 'hinglish'")
         conn.commit()
         conn.close()
     except Exception as e:

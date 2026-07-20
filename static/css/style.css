@@ -1381,6 +1381,28 @@ body {
     box-shadow: 0 0 10px var(--neon-purple-glow);
 }
 
+select.text-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c92ab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+select.text-input option {
+    background-color: #0b0813;
+    color: #FAF5EE;
+}
+
+.light-theme select.text-input option {
+    background-color: #f4f0f6;
+    color: #1e1627;
+}
+
 /* ==========================================================================
    SETUP WIZARD MODAL
    ========================================================================== */
@@ -1616,3 +1638,224 @@ body {
         display: none; /* Mobile view defaults to center chat workspace */
     }
 }
+
+/* ==========================================================================
+   CHARACTER SWITCHER STYLES
+   ========================================================================== */
+.character-switcher h3 {
+    font-size: 11px;
+    font-family: var(--font-header);
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.char-select-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: var(--transition-smooth);
+}
+
+.char-select-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(189, 0, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.char-select-btn.active {
+    background: rgba(189, 0, 255, 0.08);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 12px rgba(189, 0, 255, 0.2);
+}
+
+.char-img-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: var(--transition-smooth);
+}
+
+.char-select-btn.active .char-img-wrap {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan-glow);
+}
+
+.char-select-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.char-select-btn span {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: var(--transition-smooth);
+}
+
+.char-select-btn.active span {
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   DYNAMIC CHARACTER THEME ACCENT OVERRIDES
+   ========================================================================== */
+/* 1. Voxel Resin Robot: Pink & Cyan glow theme */
+body.char-resin_robot {
+    --neon-cyan: #00e5ff;
+    --neon-cyan-glow: rgba(0, 229, 255, 0.4);
+    --neon-pink: #ff007f;
+    --neon-pink-glow: rgba(255, 0, 127, 0.4);
+    --neon-purple: #ff007f;
+    --neon-purple-glow: rgba(255, 0, 127, 0.4);
+    --bg-dark-base: #06050b;
+    --bg-dark-panel: rgba(18, 12, 30, 0.6);
+    --bg-dark-card: rgba(28, 18, 45, 0.5);
+    --border-dark: rgba(255, 0, 127, 0.15);
+}
+body.char-resin_robot .diag-menu-btn.active {
+    color: var(--neon-cyan);
+    background: rgba(0, 229, 255, 0.1);
+    border-color: rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+}
+body.char-resin_robot .char-select-btn.active {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+body.char-resin_robot .character-halo {
+    background: radial-gradient(circle, var(--neon-pink-glow) 0%, transparent 70%);
+    animation: haloPulse 3s infinite alternate ease-in-out;
+}
+
+/* 2. Cyberpunk Huo Yuner: Deep Neon Red & Electric Blue theme */
+body.char-cyberpunk_anime {
+    --neon-cyan: #0088ff;
+    --neon-cyan-glow: rgba(0, 136, 255, 0.4);
+    --neon-pink: #ff2a2a;
+    --neon-pink-glow: rgba(255, 42, 42, 0.4);
+    --neon-purple: #ff2a2a;
+    --neon-purple-glow: rgba(255, 42, 42, 0.4);
+    --bg-dark-base: #050308;
+    --bg-dark-panel: rgba(15, 10, 25, 0.65);
+    --bg-dark-card: rgba(25, 15, 40, 0.55);
+    --border-dark: rgba(255, 42, 42, 0.18);
+}
+body.char-cyberpunk_anime .diag-menu-btn.active {
+    color: var(--neon-pink);
+    background: rgba(255, 42, 42, 0.1);
+    border-color: rgba(255, 42, 42, 0.3);
+    box-shadow: 0 0 10px rgba(255, 42, 42, 0.1);
+}
+body.char-cyberpunk_anime .char-select-btn.active {
+    background: rgba(255, 42, 42, 0.08);
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 12px rgba(255, 42, 42, 0.2);
+}
+body.char-cyberpunk_anime .character-halo {
+    background: radial-gradient(circle, var(--neon-pink-glow) 0%, transparent 70%);
+    animation: haloPulse 2s infinite alternate ease-in-out;
+}
+@keyframes haloPulse {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    100% { transform: scale(1.1); opacity: 0.95; }
+}
+
+/* ==========================================================================
+   VOICE PERSONAS PRESETS STYLES
+   ========================================================================== */
+.voice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Custom scrollbar for voice-grid */
+.voice-grid::-webkit-scrollbar {
+    width: 4px;
+}
+.voice-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.01);
+}
+.voice-grid::-webkit-scrollbar-thumb {
+    background: var(--neon-purple-glow);
+    border-radius: 2px;
+}
+
+.voice-select-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: var(--transition-smooth);
+    user-select: none;
+}
+
+.voice-select-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(0, 229, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.voice-select-btn.active {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+
+.voice-emoji {
+    font-size: 18px;
+}
+
+.voice-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+}
+
+.voice-select-btn.active .voice-name {
+    color: var(--text-primary);
+}
+
+/* Character theme-aware active states for voice grid */
+body.char-resin_robot .voice-select-btn.active {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+
+body.char-cyberpunk_anime .voice-select-btn.active {
+    background: rgba(255, 42, 42, 0.08);
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 10px rgba(255, 42, 42, 0.15);
+}
+
+

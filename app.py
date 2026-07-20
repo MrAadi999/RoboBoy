@@ -19,6 +19,9 @@ THEME_FILE = os.path.join(BASE_DIR, "theme.txt")
 API_FILE = os.path.join(BASE_DIR, "api_keys.txt")
 USER_NAME_FILE = os.path.join(BASE_DIR, "user_name.txt")
 ASSISTANT_NAME_FILE = os.path.join(BASE_DIR, "assistant_name.txt")
+CHARACTER_FILE = os.path.join(BASE_DIR, "character.txt")
+DASHBOARD_LANG_FILE = os.path.join(BASE_DIR, "dashboard_language.txt")
+CHARACTER_LANG_FILE = os.path.join(BASE_DIR, "character_language.txt")
 
 # Initialize Flask app
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'), static_folder=os.path.join(BASE_DIR, 'static'))
@@ -33,16 +36,38 @@ os.makedirs(os.path.join(BASE_DIR, "templates"), exist_ok=True)
 START_TIME = time.time()
 
 # ---------------- CONFIG LOGIC ----------------
-def get_language():
+def get_dashboard_language():
+    if os.path.exists(DASHBOARD_LANG_FILE):
+        try:
+            with open(DASHBOARD_LANG_FILE, "r") as f:
+                lang = f.read().strip().lower()
+                if lang in ["english", "hinglish", "hindi", "german", "chinese", "bhojpuri", "maithili"]:
+                    return lang
+        except Exception:
+            pass
+    return "english"
+
+def get_character_language():
+    if os.path.exists(CHARACTER_LANG_FILE):
+        try:
+            with open(CHARACTER_LANG_FILE, "r") as f:
+                lang = f.read().strip().lower()
+                if lang in ["english", "hinglish", "hindi", "german", "chinese", "bhojpuri", "maithili"]:
+                    return lang
+        except Exception:
+            pass
     if os.path.exists(SETTINGS_FILE):
         try:
             with open(SETTINGS_FILE, "r") as f:
                 lang = f.read().strip().lower()
-                if lang in ["hinglish", "english"]:
+                if lang in ["english", "hinglish", "hindi", "german", "chinese", "bhojpuri", "maithili"]:
                     return lang
         except Exception:
             pass
     return "hinglish"
+
+def get_language():
+    return get_character_language()
 
 def get_theme():
     if os.path.exists(THEME_FILE):
@@ -76,6 +101,17 @@ def get_assistant_name():
         except Exception:
             pass
     return ""
+
+def get_active_character():
+    if os.path.exists(CHARACTER_FILE):
+        try:
+            with open(CHARACTER_FILE, "r") as f:
+                char = f.read().strip().lower()
+                if char in ["lina", "resin_robot", "cyberpunk_anime"]:
+                    return char
+        except Exception:
+            pass
+    return "lina"
 
 def get_api_key(service):
     if os.path.exists(API_FILE):
@@ -160,17 +196,56 @@ def ask_gemini(prompt, history, api_key, lang):
     u_name = get_user_name() or "Aditya"
     a_name = get_assistant_name() or "Lina"
     
+    active_char = get_active_character()
+    if active_char == "resin_robot":
+        char_desc = "Voxel, a cute, playful, and highly creative 3D glass-resin capsule robot assistant. You speak in a cheerful, friendly, and energetic way with fun emoji analogies"
+    elif active_char == "cyberpunk_anime":
+        char_desc = "Huo Yuner, a badass, cool, and extremely tech-savvy red-haired cyberpunk assistant. You speak with a sharp, street-smart, confident attitude"
+    else:
+        char_desc = f"{a_name}, a professional, smart, and highly capable AI Workspace Assistant"
+
     # Establish system instruction
-    if lang == "hinglish":
+    lang_lower = lang.lower()
+    if lang_lower == "hinglish":
         system_instruction = (
-            f"You are {a_name}, a highly capable Executive Assistant built by {u_name}. "
-            f"You are speaking to {u_name}. Respond in a friendly, conversational Hinglish (a natural mix of Hindi and English written in the Latin alphabet). "
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in a friendly, conversational Hinglish (a natural mix of Hindi and English written in the Latin alphabet). "
             f"Use emojis to make responses lively, and be concise and clever."
+        )
+    elif lang_lower == "hindi":
+        system_instruction = (
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in proper, grammatically correct Hindi using the Devanagari script (हिंदी script). "
+            f"Use emojis, and be polite and helpful."
+        )
+    elif lang_lower == "german":
+        system_instruction = (
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in proper, grammatically correct German (Deutsch). "
+            f"Be helpful, structured, and friendly."
+        )
+    elif lang_lower == "chinese":
+        system_instruction = (
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in proper Chinese (Simplified Mandarin / 中文). "
+            f"Be polite, professional, and clear."
+        )
+    elif lang_lower == "bhojpuri":
+        system_instruction = (
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in Bhojpuri language using the Devanagari script (भोजपुरी). "
+            f"Use localized metaphors, emojis, and be warm."
+        )
+    elif lang_lower == "maithili":
+        system_instruction = (
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in Maithili language using the Devanagari script (मैथिली). "
+            f"Use respectful tone, emojis, and be warm."
         )
     else:
         system_instruction = (
-            f"You are {a_name}, a professional and smart Executive Assistant built by {u_name}. "
-            f"You are speaking to {u_name}. Respond in clean, grammatically correct, and elegant English. "
+            f"You are {char_desc}. You are speaking to {u_name}. "
+            f"Respond in clean, grammatically correct, and elegant English. "
             f"Be extremely helpful, structured, and use code blocks for programming tasks."
         )
     
@@ -272,19 +347,34 @@ def config_api():
         u_name = get_user_name()
         a_name = get_assistant_name()
         return jsonify({
-            "language": get_language(),
+            "language": get_character_language(),
+            "dashboard_language": get_dashboard_language(),
+            "character_language": get_character_language(),
             "theme": get_theme(),
             "openweather_key": get_api_key("openweather"),
             "gemini_key": get_api_key("gemini"),
             "user_name": u_name,
             "assistant_name": a_name,
+            "active_character": get_active_character(),
             "is_configured": bool(u_name and a_name)
         })
     else:
         data = request.json or {}
-        if "language" in data:
+        if "dashboard_language" in data:
+            with open(DASHBOARD_LANG_FILE, "w") as f:
+                f.write(data["dashboard_language"].strip().lower())
+        if "character_language" in data:
+            char_lang = data["character_language"].strip().lower()
+            with open(CHARACTER_LANG_FILE, "w") as f:
+                f.write(char_lang)
             with open(SETTINGS_FILE, "w") as f:
-                f.write(data["language"])
+                f.write(char_lang)
+        if "language" in data:
+            lang = data["language"].strip().lower()
+            with open(SETTINGS_FILE, "w") as f:
+                f.write(lang)
+            with open(CHARACTER_LANG_FILE, "w") as f:
+                f.write(lang)
         if "theme" in data:
             with open(THEME_FILE, "w") as f:
                 f.write(data["theme"])
@@ -298,6 +388,9 @@ def config_api():
         if "assistant_name" in data:
             with open(ASSISTANT_NAME_FILE, "w") as f:
                 f.write(data["assistant_name"].strip())
+        if "active_character" in data:
+            with open(CHARACTER_FILE, "w") as f:
+                f.write(data["active_character"].strip().lower())
         return jsonify({"status": "success", "message": "Settings updated"})
 
 @app.route('/api/memory', methods=['GET', 'POST', 'DELETE'])
@@ -364,31 +457,109 @@ def command_api():
     action_type = "chat"
     media_url = None
 
+    # Localized Command Responses Dictionary
+    COMMAND_RESPONSES = {
+        "screenshot_success": {
+            "english": "Desktop screenshot captured successfully! 📸",
+            "hinglish": "Screenshot le liya hai! 📸",
+            "hindi": "डेस्कटॉप स्क्रीनशॉट सफलतापूर्वक लिया गया! 📸",
+            "german": "Desktop-Screenshot erfolgreich aufgenommen! 📸",
+            "chinese": "桌面截图捕获成功！ 📸",
+            "bhojpuri": "डेस्कटॉप स्क्रीनशॉट सफलता से ले लिहल गइल बा! 📸",
+            "maithili": "डेस्कटॉपक स्क्रीनशॉट सफलतापूर्वक लेल गेल! 📸",
+        },
+        "screenshot_fail": {
+            "english": "Failed to capture screenshot.",
+            "hinglish": "Screenshot nahi le paya.",
+            "hindi": "स्क्रीनशॉट लेने में असफल रहा।",
+            "german": "Screenshot konnte nicht aufgenommen werden.",
+            "chinese": "无法截取屏幕截图。",
+            "bhojpuri": "स्क्रीनशॉट ना ले पाइल।",
+            "maithili": "स्क्रीनशॉट लेबऽ में असफल रहल।",
+        },
+        "time": {
+            "english": "The time is {now} 🕒",
+            "hinglish": "Abhi time {now} ho raha hai 🕒",
+            "hindi": "अभी समय {now} हो रहा है 🕒",
+            "german": "Es ist {now} Uhr 🕒",
+            "chinese": "现在的时间是 {now} 🕒",
+            "bhojpuri": "अभी समय {now} हो रहल बा 🕒",
+            "maithili": "अखन समय {now} भ' रहल अछि 🕒",
+        },
+        "date": {
+            "english": "Today is {today} 📅",
+            "hinglish": "Aaj ki date {today} hai 📅",
+            "hindi": "आज की तारीख {today} है 📅",
+            "german": "Heute ist {today} 📅",
+            "chinese": "今天是 {today} 📅",
+            "bhojpuri": "आजु के तारीख {today} बा 📅",
+            "maithili": "आजुक तारीख {today} अछि 📅",
+        },
+        "shutdown": {
+            "english": "Shutting down the system in 5 seconds... Goodbye! 👋",
+            "hinglish": "System 5 second me shutdown ho raha hai... Bye! 👋",
+            "hindi": "सिस्टम 5 सेकंड में बंद हो रहा है... अलविदा! 👋",
+            "german": "Das System wird in 5 Sekunden heruntergefahren... Tschüss! 👋",
+            "chinese": "系统将在5秒内关机... 再见！ 👋",
+            "bhojpuri": "सिस्टम 5 सेकंड में बंद हो रहल बा... प्रणाम! 👋",
+            "maithili": "सिस्टम 5 सेकंड में बंद भ' रहल अछि... प्रणाम! 👋",
+        },
+        "restart": {
+            "english": "Restarting the system in 5 seconds... Hang on! 🔄",
+            "hinglish": "System 5 second me restart ho raha hai... Wait karein! 🔄",
+            "hindi": "सिस्टम 5 सेकंड में पुनरारंभ हो रहा है... रुकिए! 🔄",
+            "german": "Das System wird in 5 Sekunden neu gestartet... Bitte warten! 🔄",
+            "chinese": "系统将在5秒内重启... 请稍候！ 🔄",
+            "bhojpuri": "सिस्टम 5 सेकंड में रीस्टार्ट हो रहल बा... तनी रुकीं! 🔄",
+            "maithili": "सिस्टम 5 सेकंड में रीस्टार्ट भ' रहल अछि... तनी रुकी! 🔄",
+        },
+        "open_success": {
+            "english": "Opening {app_name}...",
+            "hinglish": "{app_name} khol raha hoon...",
+            "hindi": "{app_name} खोल रहा हूँ...",
+            "german": "Öffne {app_name}...",
+            "chinese": "正在打开 {app_name}...",
+            "bhojpuri": "{app_name} खोलत बानी...",
+            "maithili": "{app_name} खोलि रहल छी...",
+        },
+        "open_fail": {
+            "english": "Failed to open {app_name}.",
+            "hinglish": "{app_name} kholne me dikkat aayi.",
+            "hindi": "{app_name} खोलने में विफल रहा।",
+            "german": "{app_name} konnte nicht geöffnet werden.",
+            "chinese": "无法打开 {app_name}。",
+            "bhojpuri": "{app_name} खोले में दिक्कत भइल।",
+            "maithili": "{app_name} खोलबा में असुविधा भेल।",
+        }
+    }
+
+    lang_key = lang.lower() if lang.lower() in COMMAND_RESPONSES["screenshot_success"] else "english"
+
     # 1. Take Screenshot Command
     if "screenshot" in command or "capture screen" in command:
         screenshot_path = capture_screenshot()
         if screenshot_path:
             action_type = "screenshot"
             media_url = screenshot_path
-            response_text = "Desktop screenshot captured successfully! 📸" if lang == "english" else "Screenshot le liya hai! 📸"
+            response_text = COMMAND_RESPONSES["screenshot_success"][lang_key]
         else:
-            response_text = "Failed to capture screenshot." if lang == "english" else "Screenshot nahi le paya."
+            response_text = COMMAND_RESPONSES["screenshot_fail"][lang_key]
             action_type = "error"
 
     # 2. Time & Date Commands
     elif "time" in command and len(command.split()) <= 4:
         now = datetime.datetime.now().strftime("%I:%M %p")
-        response_text = f"The time is {now} 🕒" if lang == "english" else f"Abhi time {now} ho raha hai 🕒"
+        response_text = COMMAND_RESPONSES["time"][lang_key].format(now=now)
         action_type = "time"
         
     elif "date" in command and len(command.split()) <= 4:
         today = datetime.datetime.now().strftime("%A, %B %d, %Y")
-        response_text = f"Today is {today} 📅" if lang == "english" else f"Aaj ki date {today} hai 📅"
+        response_text = COMMAND_RESPONSES["date"][lang_key].format(today=today)
         action_type = "date"
 
     # 3. System Commands (Shutdown/Restart)
     elif "shutdown" in command:
-        response_text = "Shutting down the system in 5 seconds... Goodbye! 👋" if lang == "english" else "System 5 second me shutdown ho raha hai... Bye! 👋"
+        response_text = COMMAND_RESPONSES["shutdown"][lang_key]
         def do_shutdown():
             time.sleep(5)
             if sys.platform == "darwin":
@@ -399,7 +570,7 @@ def command_api():
         action_type = "system"
 
     elif "restart" in command:
-        response_text = "Restarting the system in 5 seconds... Hang on! 🔄" if lang == "english" else "System 5 second me restart ho raha hai... Wait karein! 🔄"
+        response_text = COMMAND_RESPONSES["restart"][lang_key]
         def do_restart():
             time.sleep(5)
             if sys.platform == "darwin":
@@ -415,10 +586,10 @@ def command_api():
         if app_name:
             success = run_open_app(app_name)
             if success:
-                response_text = f"Opening {app_name}..." if lang == "english" else f"{app_name} khol raha hoon..."
+                response_text = COMMAND_RESPONSES["open_success"][lang_key].format(app_name=app_name)
                 action_type = "open"
             else:
-                response_text = f"Failed to open {app_name}." if lang == "english" else f"{app_name} kholne me dikkat aayi."
+                response_text = COMMAND_RESPONSES["open_fail"][lang_key].format(app_name=app_name)
                 action_type = "error"
         else:
             response_text = "Please specify an application to open." if lang == "english" else "Konsa app kholna hai, batao?"

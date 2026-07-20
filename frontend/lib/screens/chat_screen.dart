@@ -101,10 +101,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           );
           
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("🎙️ Recording started... Speak now!"), duration: Duration(seconds: 2)),
+            SnackBar(content: Text(state.translate("mic_recording")), duration: const Duration(seconds: 2)),
           );
         } catch (e) {
-          logger.severe("Failed to start voice recorder: $e");
+          print("Failed to start voice recorder: $e");
           setState(() {
             _isListening = false;
             _waveformController.stop();
@@ -112,7 +112,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("⚠️ Microphone permission denied.")),
+          SnackBar(content: Text(state.translate("mic_denied"))),
         );
       }
     } else {
@@ -130,7 +130,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             final audioBytes = await file.readAsBytes();
             
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("⚡ Transcribing audio pipeline..."), duration: Duration(seconds: 1)),
+              SnackBar(content: Text(state.translate("transcribing")), duration: const Duration(seconds: 1)),
             );
             
             // 1. Upload audio to STT service
@@ -275,8 +275,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                       Icon(Icons.wb_sunny_outlined, color: Colors.white, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        "Aditya's Daily Briefing",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
+                        "${state.userName}'s ${state.translate("daily_brief_card")}",
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
                       ),
                     ],
                   ),
@@ -320,7 +320,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                             children: const [
                               Icon(Icons.refresh, color: Colors.white, size: 12),
                               SizedBox(width: 4),
-                              Text("Refresh Brief", style: TextStyle(color: Colors.white, fontSize: 11)),
+                              Text(state.translate("refresh_brief"), style: const TextStyle(color: Colors.white, fontSize: 11)),
                             ],
                           ),
                         )
@@ -562,7 +562,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         children: [
           const Icon(Icons.mic, color: AadiTheme.primarySaffron),
           const SizedBox(width: 12),
-          const Text("Suno, main sun raha hoon... Speak now", style: TextStyle(color: AadiTheme.primarySaffron, fontWeight: FontWeight.bold)),
+          Text(state.translate("listening_mic"), style: const TextStyle(color: AadiTheme.primarySaffron, fontWeight: FontWeight.bold)),
           const SizedBox(width: 16),
           // Pulsing waveform graphics
           AnimatedBuilder(

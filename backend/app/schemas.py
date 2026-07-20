@@ -41,6 +41,8 @@ class MemoryResponse(BaseModel):
 class PreferencesUpdate(BaseModel):
     tone: Optional[str] = None
     language: Optional[str] = None
+    dashboard_language: Optional[str] = None
+    character_language: Optional[str] = None
     permission_calendar: Optional[bool] = None
     permission_email: Optional[bool] = None
     permission_location: Optional[bool] = None
@@ -51,6 +53,8 @@ class PreferencesUpdate(BaseModel):
 class PreferencesResponse(BaseModel):
     tone: str
     language: str
+    dashboard_language: str
+    character_language: str
     hinglish_ratio: float
     preferred_length: str
     permission_calendar: bool

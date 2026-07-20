@@ -179,13 +179,32 @@
                     <div class="character-identity-card glass-card">
                         <div class="character-portrait-wrapper">
                             <div class="character-halo"></div>
-                            <img src="/static/images/lina.png" class="character-portrait" alt="Lina">
+                            <img src="/static/images/lina.png" class="character-portrait" id="characterPortrait" alt="Lina">
                         </div>
-                        <h2 class="character-name">Lina <span class="verified-badge" title="Verified Assistant">✓</span></h2>
-                        <p class="character-title">EXECUTIVE VOICE ASSISTANT</p>
+                        <h2 class="character-name" id="characterProfileName">Lina <span class="verified-badge" title="Verified Assistant">✓</span></h2>
+                        <p class="character-title" id="characterProfileTitle">EXECUTIVE VOICE ASSISTANT</p>
                         <div class="character-status">
                             <span class="status-dot pulsing"></span>
                             <span class="status-label">Voice Synthesis Connected</span>
+                        </div>
+                    </div>
+
+                    <!-- Character Switcher Grid -->
+                    <div class="character-switcher glass-card" style="margin-top: 16px;">
+                        <h3>CHOOSE ASSISTANT</h3>
+                        <div class="character-grid">
+                            <div class="char-select-btn active" id="char-btn-lina" onclick="selectCharacter('lina')">
+                                <div class="char-img-wrap"><img src="/static/images/lina.png" alt="Lina"></div>
+                                <span>Lina</span>
+                            </div>
+                            <div class="char-select-btn" id="char-btn-resin_robot" onclick="selectCharacter('resin_robot')">
+                                <div class="char-img-wrap"><img src="/static/images/resin_robot.png" alt="Voxel"></div>
+                                <span>Voxel</span>
+                            </div>
+                            <div class="char-select-btn" id="char-btn-cyberpunk_anime" onclick="selectCharacter('cyberpunk_anime')">
+                                <div class="char-img-wrap"><img src="/static/images/cyberpunk_anime.png" alt="Huo Yuner"></div>
+                                <span>Huo Yuner</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,6 +234,53 @@
                                 <span id="volumeVal">100%</span>
                             </div>
                             <input type="range" id="voiceVolume" min="0" max="100" step="5" value="100" class="neon-slider">
+                        </div>
+                    </div>
+                    
+                    <!-- Voice Presets Section -->
+                    <div class="voice-presets-section glass-card" style="margin-top: 16px;">
+                        <h3>VOICE PERSONAS</h3>
+                        <div class="voice-grid">
+                            <div class="voice-select-btn" id="voice-btn-cute_girl" onclick="selectVoicePreset('cute_girl')">
+                                <span class="voice-emoji">👧🏻</span>
+                                <span class="voice-name">Cute Girl</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-hot_boy" onclick="selectVoicePreset('hot_boy')">
+                                <span class="voice-emoji">🙋‍♂️</span>
+                                <span class="voice-name">Hot Boy</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-gents" onclick="selectVoicePreset('gents')">
+                                <span class="voice-emoji">👨🏻</span>
+                                <span class="voice-name">Gentleman</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-woman" onclick="selectVoicePreset('woman')">
+                                <span class="voice-emoji">👩</span>
+                                <span class="voice-name">Woman</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-men_robot" onclick="selectVoicePreset('men_robot')">
+                                <span class="voice-emoji">🤖‍♂️</span>
+                                <span class="voice-name">Men Robot</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-girl_child" onclick="selectVoicePreset('girl_child')">
+                                <span class="voice-emoji">👧</span>
+                                <span class="voice-name">Girl Child</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-boys_child" onclick="selectVoicePreset('boys_child')">
+                                <span class="voice-emoji">👦</span>
+                                <span class="voice-name">Boys Child</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-women_robot" onclick="selectVoicePreset('women_robot')">
+                                <span class="voice-emoji">🤖‍♀️</span>
+                                <span class="voice-name">Women Robot</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-old_man" onclick="selectVoicePreset('old_man')">
+                                <span class="voice-emoji">👴</span>
+                                <span class="voice-name">Old Man</span>
+                            </div>
+                            <div class="voice-select-btn" id="voice-btn-old_woman" onclick="selectVoicePreset('old_woman')">
+                                <span class="voice-emoji">👵</span>
+                                <span class="voice-name">Old Woman</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -292,11 +358,29 @@
             </div>
             <div class="drawer-body">
                 <div class="control-group">
-                    <label>LANGUAGE ENGINE</label>
-                    <div class="toggle-group" id="langToggle">
-                        <button class="toggle-btn active" data-lang="hinglish">Hinglish</button>
-                        <button class="toggle-btn" data-lang="english">English</button>
-                    </div>
+                    <label id="lblDashboardLanguage">DASHBOARD LANGUAGE</label>
+                    <select id="dashboardLangSelect" onchange="updateDashboardLanguage(this.value)" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 8px; font-family: inherit; outline: none; transition: border 0.3s;">
+                        <option value="english" style="background: #1a1528;">English</option>
+                        <option value="hinglish" style="background: #1a1528;">Hinglish</option>
+                        <option value="hindi" style="background: #1a1528;">Hindi (हिन्दी)</option>
+                        <option value="german" style="background: #1a1528;">German (Deutsch)</option>
+                        <option value="chinese" style="background: #1a1528;">Chinese (中文)</option>
+                        <option value="bhojpuri" style="background: #1a1528;">Bhojpuri (भोजपुरी)</option>
+                        <option value="maithili" style="background: #1a1528;">Maithili (मैथिली)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label id="lblCharacterLanguage">CHARACTER VOICE LANGUAGE</label>
+                    <select id="characterLangSelect" onchange="updateCharacterLanguage(this.value)" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 8px; font-family: inherit; outline: none; transition: border 0.3s;">
+                        <option value="english" style="background: #1a1528;">English</option>
+                        <option value="hinglish" style="background: #1a1528;">Hinglish</option>
+                        <option value="hindi" style="background: #1a1528;">Hindi (हिन्दी)</option>
+                        <option value="german" style="background: #1a1528;">German (Deutsch)</option>
+                        <option value="chinese" style="background: #1a1528;">Chinese (中文)</option>
+                        <option value="bhojpuri" style="background: #1a1528;">Bhojpuri (भोजपुरी)</option>
+                        <option value="maithili" style="background: #1a1528;">Maithili (मैथिली)</option>
+                    </select>
                 </div>
 
                 <div class="control-group">
@@ -313,6 +397,22 @@
                         <input type="checkbox" id="ttsEnabled" checked>
                         <label for="ttsEnabled">Vocal Synthesis Output</label>
                     </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 14px;">
+                    <label>VOICE PERSONA</label>
+                    <select id="voicePresetSelect" class="text-input" style="margin-top: 6px;" onchange="selectVoicePreset(this.value)">
+                        <option value="cute_girl">👧🏻 Cute Girl</option>
+                        <option value="hot_boy">🙋‍♂️ Hot Boy</option>
+                        <option value="gents">👨🏻 Gentleman</option>
+                        <option value="woman">👩 Woman</option>
+                        <option value="men_robot">🤖‍♂️ Men Robot</option>
+                        <option value="girl_child">👧 Girl Child</option>
+                        <option value="boys_child">👦 Boys Child</option>
+                        <option value="women_robot">🤖‍♀️ Women Robot</option>
+                        <option value="old_man">👴 Old Man</option>
+                        <option value="old_woman">👵 Old Woman</option>
+                    </select>
                 </div>
 
                 <div class="sidebar-divider"></div>
@@ -368,11 +468,29 @@
             </div>
             
             <div class="control-group">
-                <label>Primary Language</label>
-                <div class="toggle-group" id="setupLangToggle" style="margin-top: 6px;">
-                    <button class="toggle-btn active" data-lang="hinglish" onclick="setSetupLanguage('hinglish')">Hinglish</button>
-                    <button class="toggle-btn" data-lang="english" onclick="setSetupLanguage('english')">English</button>
-                </div>
+                <label id="lblSetupDashboardLang">Dashboard Language</label>
+                <select id="setupDashboardLangSelect" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 8px; font-family: inherit; margin-top: 6px;">
+                    <option value="english" style="background: #1a1528;">English</option>
+                    <option value="hinglish" style="background: #1a1528;">Hinglish</option>
+                    <option value="hindi" style="background: #1a1528;">Hindi (हिन्दी)</option>
+                    <option value="german" style="background: #1a1528;">German (Deutsch)</option>
+                    <option value="chinese" style="background: #1a1528;">Chinese (中文)</option>
+                    <option value="bhojpuri" style="background: #1a1528;">Bhojpuri (भोजपुरी)</option>
+                    <option value="maithili" style="background: #1a1528;">Maithili (मैथिली)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label id="lblSetupCharacterLang">3D Character Language</label>
+                <select id="setupCharacterLangSelect" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 8px; font-family: inherit; margin-top: 6px;">
+                    <option value="english" style="background: #1a1528;">English</option>
+                    <option value="hinglish" style="background: #1a1528;" selected>Hinglish</option>
+                    <option value="hindi" style="background: #1a1528;">Hindi (हिन्दी)</option>
+                    <option value="german" style="background: #1a1528;">German (Deutsch)</option>
+                    <option value="chinese" style="background: #1a1528;">Chinese (中文)</option>
+                    <option value="bhojpuri" style="background: #1a1528;">Bhojpuri (भोजपुरी)</option>
+                    <option value="maithili" style="background: #1a1528;">Maithili (मैथिली)</option>
+                </select>
             </div>
 
             <div class="control-group">
