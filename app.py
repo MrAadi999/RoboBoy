@@ -786,12 +786,12 @@ def command_api():
 def open_browser():
     """Waits 1.5 seconds and opens the local Flask server URL in the web browser"""
     time.sleep(1.5)
-    webbrowser.open("http://127.0.0.1:5000")
+    webbrowser.open("http://127.0.0.1:5001")
 
 # ---------------- SERVER ENTRY ----------------
 if __name__ == '__main__':
     # Start web browser launch thread
     threading.Thread(target=open_browser, daemon=True).start()
     
-    # Run server on port 5000
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    # Run server on port 5001
+    app.run(host='127.0.0.1', port=5001, debug=False)
