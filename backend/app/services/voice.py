@@ -92,6 +92,18 @@ class VoiceService:
         logger.info("Using fallback mock speech-to-text response.")
         return "Hello Aadi, check my Flipkart orders and draft a complaint."
 
+    def _get_active_character(self) -> str:
+        try:
+            char_file = "/Users/adityakumar/RoboBoy/character.txt"
+            if os.path.exists(char_file):
+                with open(char_file, "r") as f:
+                    char_name = f.read().strip().lower()
+                    if char_name in ["lina", "resin_robot", "cyberpunk_anime"]:
+                        return char_name
+        except Exception as e:
+            logger.warning(f"Failed to read character.txt: {e}")
+        return "lina"
+
     async def text_to_speech(self, text: str, language: str = "hinglish") -> tuple[bytes, str]:
         """
         Synthesizes text into speech audio bytes.
@@ -100,7 +112,68 @@ class VoiceService:
         Returns: (audio_bytes, mime_type)
         """
         import urllib.parse
-        
+
+        # 0. macOS Native say command with character customization (highest priority on macOS)
+        if sys.platform == "darwin":
+            try:
+                active_char = self._get_active_character()
+                logger.info(f"Synthesizing speech on macOS for character: {active_char}, language: {language}")
+
+                temp_dir = tempfile.gettempdir()
+                out_aiff = os.path.join(temp_dir, "tts_out.aiff")
+                out_wav = os.path.join(temp_dir, "tts_out.wav")
+
+                for path in [out_aiff, out_wav]:
+                    if os.path.exists(path):
+                        try:
+                            os.remove(path)
+                        except OSError:
+                            pass
+
+                lang_lower = language.lower()
+                voice_name = None
+                text_prefix = ""
+
+                if active_char == "resin_robot":
+                    # Resin Robot (Robotic)
+                    voice_name = "Zarvox"
+                    text_prefix = "[[rate 175]]"
+                elif active_char == "cyberpunk_anime":
+                    # Cyberpunk Anime (Hot Boy / Boyfriend)
+                    if lang_lower in ["hinglish", "hindi", "bhojpuri", "maithili"]:
+                        # Use Lekha with low pitch baseline
+                        voice_name = "Lekha"
+                        text_prefix = "[[rate 165]][[pbas -20]]"
+                    else:
+                        # English/Other male voice
+                        voice_name = "Rishi" # Default en_IN male voice
+                        text_prefix = "[[rate 165]][[pbas -10]]"
+                else:
+                    # Lina (Cute Girl / Girlfriend) - Default
+                    if lang_lower in ["hinglish", "hindi", "bhojpuri", "maithili"]:
+                        voice_name = "Lekha"
+                        text_prefix = "[[rate 155]][[pbas +5]]"
+                    else:
+                        voice_name = "Samantha"
+                        text_prefix = "[[rate 155]][[pbas +5]]"
+
+                voice_option = ["-v", voice_name] if voice_name else []
+                spoken_text = f"{text_prefix}{text}"
+
+                # Run macOS say command
+                logger.info(f"Running macOS 'say' command with voice={voice_name}, rate/pitch={text_prefix}")
+                subprocess.run(["say"] + voice_option + ["-o", out_aiff, spoken_text], check=True, capture_output=True)
+
+                # Convert to WAV using afconvert for universal compatibility
+                if os.path.exists(out_aiff):
+                    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16", out_aiff, out_wav], check=True, capture_output=True)
+                    if os.path.exists(out_wav):
+                        with open(out_wav, "rb") as f:
+                            audio_data = f.read()
+                        return audio_data, "audio/wav"
+            except Exception as ex:
+                logger.error(f"macOS custom voice synthesis failed: {ex}. Falling back to standard methods.")
+
         lang_map = {
             "english": "en",
             "hinglish": "hi",
