@@ -1,0 +1,28 @@
+# Virtual environment
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local/Sensitive Configuration Files
+api_keys.txt
+settings.txt
+theme.txt
+user_name.txt
+assistant_name.txt
+backend/.env
+.env
+
+# Databases
+backend/aadi_ai.db
+*.db
+*.sqlite
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

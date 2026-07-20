@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboBoy // AI System Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="doer-workspace dark-theme">
+    <!-- Futuristic neon particle glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <div class="app-layout">
+        
+        <!-- COLUMN 1: SYSTEM CONTROLS & LOGS -->
+        <aside class="sidebar-container glass-panel">
+            <!-- Brand Logo -->
+            <div class="brand-logo">
+                <span class="brand-text-do">Robo</span>
+                <span class="brand-text-er">Boy</span>
+                <span class="system-tag">v2.5</span>
+            </div>
+
+            <!-- Quick Stats Overview Widget (Dashboard Style) -->
+            <div class="overview-widget glass-card border-neon-cyan">
+                <h3><span class="glow-dot cyan"></span>SYSTEM DIAGNOSTICS</h3>
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-label">Core Engine</span>
+                        <span class="stat-val text-neon-green">ACTIVE</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Uptime</span>
+                        <span class="stat-val text-neon-cyan" id="serverUptime">0:00:00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory Blocks</span>
+                        <span class="stat-val text-neon-purple" id="badgeConversations">1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Action Pills Panel -->
+            <div class="quick-commands-widget">
+                <h3>QUICK OPERATIONS</h3>
+                <div class="commands-grid">
+                    <button class="cmd-pill" onclick="executeQuickCommand('Time')">🕒 Time</button>
+                    <button class="cmd-pill" onclick="executeQuickCommand('Date')">📅 Date</button>
+                    <button class="cmd-pill" onclick="executeQuickCommand('Weather in Mumbai')">🌤️ Weather</button>
+                    <button class="cmd-pill" onclick="executeQuickCommand('Help')">💡 Help</button>
+                    <button class="cmd-pill" onclick="executeQuickCommand('Take a screenshot')">📸 Screenshot</button>
+                    <button class="cmd-pill" onclick="executeQuickCommand('What do you remember')">🧠 Recall</button>
+                </div>
+            </div>
+
+            <!-- Cognitive Memory Logs Widget -->
+            <div class="cognitive-records-widget glass-card">
+                <div class="records-header">
+                    <h3>COGNITIVE LOGS</h3>
+                    <button class="add-log-btn" onclick="addMemoryPrompt()" title="Log Memory">+</button>
+                </div>
+                <div class="memory-scroll" id="memoryScroll">
+                    <div class="memory-loading">Reading cognitive logs...</div>
+                </div>
+            </div>
+            
+            <!-- Sidebar Footer Controls -->
+            <div class="sidebar-footer">
+                <button class="footer-action-btn" onclick="toggleDrawer('settingsDrawer')" title="System Preferences">
+                    ⚙️ Settings
+                </button>
+                <button class="footer-action-btn" onclick="executeQuickCommand('Clear Chat')" title="Clear Console Context">
+                    🗑️ Clear
+                </button>
+            </div>
+        </aside>
+
+        <!-- COLUMN 2: CORE AI WORKSPACE -->
+        <main class="chat-container">
+            <!-- Top Status Bar -->
+            <header class="chat-header glass-card">
+                <div class="header-left">
+                    <div class="pulse-online"></div>
+                    <span class="header-status-text" id="statusText">System Ready</span>
+                </div>
+                <div class="header-badge-metrics">
+                    <div class="badge">
+                        <span class="badge-icon">CODE</span>
+                        <span class="badge-count" id="badgeCode">0</span>
+                    </div>
+                    <div class="badge">
+                        <span class="badge-icon">LOAD</span>
+                        <span class="badge-count" id="badgePower">33</span>%
+                    </div>
+                </div>
+            </header>
+
+            <!-- Conversation Canvas -->
+            <section class="messages-canvas" id="chatMessages">
+                <!-- Welcome prompt bubble -->
+                <div class="chat-bubble assistant animate-fade-in">
+                    <div class="bubble-avatar-img-container">
+                        <img src="/static/images/lina.png" class="bubble-avatar-img" alt="Lina">
+                    </div>
+                    <div class="bubble-body">
+                        <p>System initialized. I am <strong>Lina</strong> — your RoboBoy AI Workspace Assistant ⚡. How can I help you today?</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Floating suggestion pills -->
+            <div class="suggestion-pills-row">
+                <button class="suggestion-pill" onclick="executeQuickCommand('Your Daily Brief')">📋 Daily Brief</button>
+                <button class="suggestion-pill" onclick="executeQuickCommand('Tell me about yourself')">🤖 Tell me about yourself</button>
+                <button class="suggestion-pill" onclick="executeQuickCommand('Wikipedia Alan Turing')">🌐 Wikipedia</button>
+            </div>
+
+            <!-- Capsule prompt input bar -->
+            <div class="prompt-bar-container">
+                <div class="prompt-bar glass-card">
+                    <button class="prompt-add-btn" onclick="addMemoryPrompt()" title="Add memory item">+</button>
+                    <input type="text" id="userInput" placeholder="Ask Lina anything..." autocomplete="off">
+                    <div class="prompt-actions">
+                        <button class="voice-trigger-btn" id="voiceTriggerBtn" title="Speak message">
+                            <span class="mic-icon">🎤</span>
+                        </button>
+                        <button class="send-trigger-btn" onclick="submitMessage()" id="sendBtn" title="Send message">
+                            <span class="send-icon">↑</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voice wave visualization when listening -->
+            <div class="voice-visualization hidden" id="voiceVisualizer">
+                <div class="sound-wave">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+                <p id="voiceVisualizerText">System listening for commands...</p>
+            </div>
+        </main>
+
+        <!-- COLUMN 3: CHARACTER PROFILE & VOICE CALIBRATION -->
+        <!-- COLUMN 3: CHARACTER PROFILE & VOICE CALIBRATION (Tabbed Menu) -->
+        <aside class="diagnostics-container glass-panel">
+            <!-- Top Menu/Tab Bar -->
+            <div class="diag-menu-bar">
+                <button class="diag-menu-btn active" onclick="switchDiagTab(event, 'tab-profile')">
+                    <span class="btn-icon">👤</span> Profile
+                </button>
+                <button class="diag-menu-btn" onclick="switchDiagTab(event, 'tab-voice')">
+                    <span class="btn-icon">🎙️</span> Voice
+                </button>
+                <button class="diag-menu-btn" onclick="switchDiagTab(event, 'tab-stats')">
+                    <span class="btn-icon">📊</span> Stats
+                </button>
+            </div>
+
+            <div class="diag-tab-content-wrapper">
+                <!-- Tab 1: Profile -->
+                <div class="diag-tab-pane active" id="tab-profile">
+                    <!-- Portrait & Status -->
+                    <div class="character-identity-card glass-card">
+                        <div class="character-portrait-wrapper">
+                            <div class="character-halo"></div>
+                            <img src="/static/images/lina.png" class="character-portrait" alt="Lina">
+                        </div>
+                        <h2 class="character-name">Lina <span class="verified-badge" title="Verified Assistant">✓</span></h2>
+                        <p class="character-title">EXECUTIVE VOICE ASSISTANT</p>
+                        <div class="character-status">
+                            <span class="status-dot pulsing"></span>
+                            <span class="status-label">Voice Synthesis Connected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Voice Calibration -->
+                <div class="diag-tab-pane" id="tab-voice">
+                    <!-- Voice Customizer Section (Pin 1 style) -->
+                    <div class="voice-customizer glass-card">
+                        <h3>VOICE CALIBRATION</h3>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Speed (Rate)</span>
+                                <span id="speedVal">1.0x</span>
+                            </div>
+                            <input type="range" id="voiceSpeed" min="0.5" max="2.0" step="0.1" value="1.0" class="neon-slider">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Pitch Frequency</span>
+                                <span id="pitchVal">1.05x</span>
+                            </div>
+                            <input type="range" id="voicePitch" min="0.5" max="2.0" step="0.05" value="1.05" class="neon-slider">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Output Volume</span>
+                                <span id="volumeVal">100%</span>
+                            </div>
+                            <input type="range" id="voiceVolume" min="0" max="100" step="5" value="100" class="neon-slider">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Resource Telemetry -->
+                <div class="diag-tab-pane" id="tab-stats">
+                    <!-- Performance Diagnostic Meters (Pin 2 style) -->
+                    <div class="performance-widget glass-card">
+                        <h3>RESOURCE TELEMETRY</h3>
+                        <div class="metrics-grid-row">
+                            <!-- CPU Ring -->
+                            <div class="telemetry-card">
+                                <div class="dial-container">
+                                    <svg class="progress-ring" width="76" height="76">
+                                        <circle class="progress-ring__circle-bg" stroke="rgba(255, 255, 255, 0.03)" stroke-width="4.5" fill="transparent" r="30" cx="38" cy="38"/>
+                                        <circle class="progress-ring__circle" id="cpuRing" stroke="var(--neon-cyan)" stroke-width="4.5" stroke-dasharray="188.49" stroke-dashoffset="188.49" stroke-linecap="round" fill="transparent" r="30" cx="38" cy="38"/>
+                                    </svg>
+                                    <div class="dial-value"><span id="cpuVal">0</span>%</div>
+                                </div>
+                                <h4 class="text-neon-cyan">CPU CORE</h4>
+                            </div>
+
+                            <!-- RAM Ring -->
+                            <div class="telemetry-card">
+                                <div class="dial-container">
+                                    <svg class="progress-ring" width="76" height="76">
+                                        <circle class="progress-ring__circle-bg" stroke="rgba(255, 255, 255, 0.03)" stroke-width="4.5" fill="transparent" r="30" cx="38" cy="38"/>
+                                        <circle class="progress-ring__circle" id="ramRing" stroke="var(--neon-pink)" stroke-width="4.5" stroke-dasharray="188.49" stroke-dashoffset="188.49" stroke-linecap="round" fill="transparent" r="30" cx="38" cy="38"/>
+                                    </svg>
+                                    <div class="dial-value"><span id="ramVal">0</span>%</div>
+                                </div>
+                                <h4 class="text-neon-pink">RAM INDEX</h4>
+                            </div>
+                        </div>
+
+                        <!-- SVG Activity Peak Graph (Pin 2 style) -->
+                        <div class="telemetry-chart-container">
+                            <div class="chart-header">
+                                <span>PROMPT TELEMETRY</span>
+                                <span class="active-pulse text-neon-green">LIVE</span>
+                            </div>
+                            <div class="chart-wrapper">
+                                <!-- Simulated real-time wave graph -->
+                                <svg class="telemetry-chart" id="activityChart" viewBox="0 0 240 60">
+                                    <!-- Background Grid Lines -->
+                                    <line x1="0" y1="15" x2="240" y2="15" stroke="rgba(255, 255, 255, 0.05)" stroke-width="0.5"/>
+                                    <line x1="0" y1="30" x2="240" y2="30" stroke="rgba(255, 255, 255, 0.05)" stroke-width="0.5"/>
+                                    <line x1="0" y1="45" x2="240" y2="45" stroke="rgba(255, 255, 255, 0.05)" stroke-width="0.5"/>
+                                    <!-- Glowing gradient definition -->
+                                    <defs>
+                                        <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" stop-color="var(--neon-purple-glow)" stop-opacity="0.4"/>
+                                            <stop offset="100%" stop-color="var(--neon-purple-glow)" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Fill Area under the graph -->
+                                    <path id="chartAreaPath" d="M 0 60 L 0 40 Q 30 20 60 45 T 120 20 T 180 50 T 240 30 L 240 60 Z" fill="url(#chartGrad)"/>
+                                    <!-- Stroke Path -->
+                                    <path id="chartStrokePath" d="M 0 40 Q 30 20 60 45 T 120 20 T 180 50 T 240 30" fill="none" stroke="var(--neon-purple)" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- SETTINGS PANEL OVERLAY DRAWER -->
+    <div class="drawer-overlay" id="settingsDrawer">
+        <div class="drawer-content glass-panel border-neon-purple">
+            <div class="drawer-header">
+                <h2>SYSTEM CREDENTIALS</h2>
+                <button class="drawer-close-btn" onclick="toggleDrawer('settingsDrawer')">×</button>
+            </div>
+            <div class="drawer-body">
+                <div class="control-group">
+                    <label>LANGUAGE ENGINE</label>
+                    <div class="toggle-group" id="langToggle">
+                        <button class="toggle-btn active" data-lang="hinglish">Hinglish</button>
+                        <button class="toggle-btn" data-lang="english">English</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>INTERFACE STYLE</label>
+                    <div class="toggle-group" id="themeToggle">
+                        <button class="toggle-btn active" data-theme="dark">Dark</button>
+                        <button class="toggle-btn" data-theme="light">Light</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>AUDIO CHANNELS</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="ttsEnabled" checked>
+                        <label for="ttsEnabled">Vocal Synthesis Output</label>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider"></div>
+
+                <div class="control-group">
+                    <label>YOUR NAME</label>
+                    <input type="text" id="userName" placeholder="What should I call you? (e.g. Aditya)" class="text-input" style="margin-top: 6px;">
+                </div>
+
+                <div class="control-group" style="margin-top: 14px;">
+                    <label>ASSISTANT NAME</label>
+                    <input type="text" id="assistantName" placeholder="Name your assistant (e.g. Lina)" class="text-input" style="margin-top: 6px;">
+                </div>
+
+                <div class="control-group" style="margin-top: 14px;">
+                    <label>GEMINI API KEY</label>
+                    <div class="password-input">
+                        <input type="password" id="geminiKey" placeholder="Enter key (AIzaSy...)">
+                        <button class="view-key-btn" onclick="toggleKeyVisibility('geminiKey')">👁️</button>
+                    </div>
+                </div>
+                
+                <div class="control-group" style="margin-top: 14px;">
+                    <label>OPENWEATHERMAP KEY</label>
+                    <div class="password-input">
+                        <input type="password" id="weatherKey" placeholder="Enter Weather API key">
+                        <button class="view-key-btn" onclick="toggleKeyVisibility('weatherKey')">👁️</button>
+                    </div>
+                </div>
+                
+                <button class="save-settings-btn" onclick="saveConfiguration()">
+                    <span>SYNC CREDENTIALS</span>
+                    <span class="save-loader hidden" id="saveLoader"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETUP WIZARD OVERLAY -->
+    <div class="setup-overlay hidden" id="setupOverlay">
+        <div class="setup-card">
+            <h2>Welcome to RoboBoy</h2>
+            <p>Let's personalize your voice assistant to match your environment. Configure your profile below to start.</p>
+            
+            <div class="control-group">
+                <label>What should I call you?</label>
+                <input type="text" id="setupUserName" placeholder="Your Name (e.g. Aditya)" class="text-input">
+            </div>
+            
+            <div class="control-group">
+                <label>What would you like to name me?</label>
+                <input type="text" id="setupAssistantName" placeholder="Assistant Name (e.g. Lina, Jarvis)" class="text-input">
+            </div>
+            
+            <div class="control-group">
+                <label>Primary Language</label>
+                <div class="toggle-group" id="setupLangToggle" style="margin-top: 6px;">
+                    <button class="toggle-btn active" data-lang="hinglish" onclick="setSetupLanguage('hinglish')">Hinglish</button>
+                    <button class="toggle-btn" data-lang="english" onclick="setSetupLanguage('english')">English</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Gemini API Key (Optional)</label>
+                <div class="password-input">
+                    <input type="password" id="setupGeminiKey" placeholder="Enter key (AIzaSy...)">
+                </div>
+            </div>
+            
+            <button class="save-settings-btn" onclick="saveFirstTimeSetup()" style="margin-top: 24px;">
+                <span>INITIALIZE ASSISTANT ⚡</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert toast for status operations -->
+    <div class="toast hidden" id="toast">
+        <span id="toastMsg">Sync complete.</span>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
