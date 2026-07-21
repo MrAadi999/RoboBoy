@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboBoy // 3D Neural Hologram</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Three.js & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+        
+        /* Neon Cyberpunk HUD overlays */
+        .hud-overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .glass-panel {
+            background: rgba(8, 10, 20, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px 24px;
+            pointer-events: auto;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                        inset 0 0 12px rgba(0, 240, 255, 0.05);
+        }
+        
+        .brand {
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: 1px;
+            color: #00f0ff;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .brand span {
+            color: #7000ff;
+            text-shadow: 0 0 10px rgba(112, 0, 255, 0.5);
+        }
+        
+        .tag {
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            background: rgba(0, 240, 255, 0.1);
+            color: #00f0ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            text-transform: uppercase;
+        }
+        
+        .hud-title {
+            margin-top: 8px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, rgba(112, 0, 255, 0.3), rgba(0, 240, 255, 0.3));
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, rgba(112, 0, 255, 0.6), rgba(0, 240, 255, 0.6));
+            border-color: #00f0ff;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* Bottom Control Panel & Logs */
+        .hud-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+        }
+        
+        .log-panel {
+            width: 320px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: #39ff14;
+            max-height: 150px;
+            overflow-y: hidden;
+            border-color: rgba(57, 255, 20, 0.2);
+            text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+        }
+        
+        .log-line {
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .controls-info {
+            width: 300px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: right;
+            border-color: rgba(0, 240, 255, 0.1);
+        }
+        
+        .controls-info table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        
+        .controls-info td {
+            padding: 2px 0;
+        }
+        
+        .controls-info td.key {
+            color: #00f0ff;
+            font-family: 'Fira Code', monospace;
+            text-align: left;
+        }
+        
+        /* Background decorative grid and visualizers */
+        #three-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* Scanning lines effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.06),
+                rgba(0, 255, 0, 0.02),
+                rgba(0, 0, 255, 0.06)
+            );
+            background-size: 100% 4px, 6px 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        /* Hologram vignette */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 240, 255, 0.15);
+            z-index: 6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    
+    <div class="hud-overlay">
+        <!-- HEADER HUD -->
+        <div class="hud-header">
+            <div class="glass-panel">
+                <div class="brand">Robo<span>Boy</span> <div class="tag">Hologram</div></div>
+                <div class="hud-title">3D COGNITIVE CODENAME: HACKER BOY (3D PHOTO MATCH)</div>
+            </div>
+            
+            <a href="/" class="back-btn pointer-events-auto">
+                <span>←</span> Back to Dashboard
+            </a>
+        </div>
+        
+        <!-- FOOTER HUD -->
+        <div class="hud-footer">
+            <div class="glass-panel log-panel">
+                <div class="log-line">> CONNECTING TO CYBER-NEURAL BRAIN...</div>
+                <div class="log-line">> MAPPING DESIGN DETAILED ELEMENTS FROM PHOTO...</div>
+                <div class="log-line">> SERVER RACK & NEON HOODIE LOADED...</div>
+                <div class="log-line" id="dynamic-log">> WAITING FOR INTERACTION...</div>
+            </div>
+            
+            <div class="glass-panel controls-info">
+                <strong>HOLOGRAM CONTROLS</strong>
+                <table>
+                    <tr>
+                        <td class="key">Orbit/Rotate</td>
+                        <td>Left Click + Drag</td>
+                    </tr>
+                    <tr>
+                        <td class="key">Zoom In/Out</td>
+                        <td>Scroll Mouse Wheel</td>
+                    </tr>
+                    <tr>
+                        <td class="key">Pan/Move</td>
+                        <td>Right Click + Drag</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="three-canvas"></canvas>
+    
+    <script>
+        // --- 1. SETUP THREE.JS SCENE ---
+        const canvas = document.getElementById('three-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050508, 0.025);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 2.5, 7.5);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.02; // Keep camera above the ground
+        controls.minDistance = 3;
+        controls.maxDistance = 15;
+        controls.target.set(0.4, 1.2, 0); // Focus slightly offset to center character + server rack
+        
+        // --- 2. LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x0a0a20, 1.8);
+        scene.add(ambientLight);
+        
+        const mainLight = new THREE.DirectionalLight(0x00f0ff, 2.0);
+        mainLight.position.set(5, 10, 7);
+        scene.add(mainLight);
+        
+        const backLight = new THREE.DirectionalLight(0x7000ff, 2.5);
+        backLight.position.set(-5, 5, -5);
+        scene.add(backLight);
+        
+        const spotLight = new THREE.SpotLight(0x39ff14, 4, 12, Math.PI / 4, 0.5, 1);
+        spotLight.position.set(0.5, 7, 0);
+        spotLight.target.position.set(0.5, 0, 0);
+        scene.add(spotLight);
+        scene.add(spotLight.target);
+        
+        // --- 3. FLOOR GRID & BASE PEDESTAL ---
+        const gridHelper = new THREE.GridHelper(30, 30, 0x00f0ff, 0x071b26);
+        gridHelper.position.y = 0.01;
+        scene.add(gridHelper);
+        
+        // Glowing base pedestal
+        const baseGroup = new THREE.Group();
+        const baseGeo = new THREE.CylinderGeometry(2.4, 2.6, 0.25, 32);
+        const baseMat = new THREE.MeshStandardMaterial({
+            color: 0x080812,
+            roughness: 0.3,
+            metalness: 0.8
+        });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = 0.125;
+        baseGroup.add(base);
+        
+        // Glowing cyan border trim
+        const ringGeo = new THREE.TorusGeometry(2.45, 0.03, 8, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.25;
+        baseGroup.add(ring);
+        
+        scene.add(baseGroup);
+        
+        // --- 4. SERVER RACK (Leaning object from photo) ---
+        const serverGroup = new THREE.Group();
+        serverGroup.position.set(-1.0, 0.25, -0.4);
+        
+        // Server cabinet shell
+        const cabinetGeo = new THREE.BoxGeometry(1.0, 2.1, 1.0);
+        const cabinetMat = new THREE.MeshStandardMaterial({
+            color: 0x1b1c22,
+            roughness: 0.4,
+            metalness: 0.7
+        });
+        const cabinet = new THREE.Mesh(cabinetGeo, cabinetMat);
+        cabinet.position.y = 1.05;
+        serverGroup.add(cabinet);
+        
+        // Cabinet front door glass (transparent cyan)
+        const doorGeo = new THREE.BoxGeometry(0.9, 1.95, 0.05);
+        const doorMat = new THREE.MeshStandardMaterial({
+            color: 0x00f0ff,
+            transparent: true,
+            opacity: 0.3,
+            roughness: 0.1,
+            metalness: 0.9
+        });
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(0, 1.05, 0.5);
+        serverGroup.add(door);
+        
+        // Server LED components inside (draw glowing green strips)
+        for (let i = 0; i < 7; i++) {
+            const shelfY = 0.25 + i * 0.26;
+            
+            // Server shelf box
+            const shelfGeo = new THREE.BoxGeometry(0.85, 0.12, 0.85);
+            const shelfMat = new THREE.MeshStandardMaterial({ color: 0x0d0d12 });
+            const shelf = new THREE.Mesh(shelfGeo, shelfMat);
+            shelf.position.set(0, shelfY, 0.05);
+            serverGroup.add(shelf);
+            
+            // LED Lights
+            const ledGeo = new THREE.SphereGeometry(0.025, 8, 8);
+            const greenLedMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
+            const cyanLedMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            
+            const led1 = new THREE.Mesh(ledGeo, greenLedMat);
+            led1.position.set(-0.35, shelfY, 0.48);
+            serverGroup.add(led1);
+            
+            const led2 = new THREE.Mesh(ledGeo, cyanLedMat);
+            led2.position.set(-0.25, shelfY, 0.48);
+            serverGroup.add(led2);
+            
+            // Glowing lines representing status screens inside
+            const screenLineGeo = new THREE.BoxGeometry(0.3, 0.04, 0.02);
+            const screenLine = new THREE.Mesh(screenLineGeo, greenLedMat);
+            screenLine.position.set(0.15, shelfY, 0.48);
+            serverGroup.add(screenLine);
+        }
+        
+        scene.add(serverGroup);
+        
+        // --- 5. DETAILED HACKER CHARACTER MODEL (MATCHING GENERATED PHOTO) ---
+        const character = new THREE.Group();
+        character.position.set(0.5, 0.25, 0); // Leaning slightly to the right of server
+        
+        const darkJacketMat = new THREE.MeshStandardMaterial({
+            color: 0x141419,
+            roughness: 0.5,
+            metalness: 0.15
+        });
+        
+        const pantsMat = new THREE.MeshStandardMaterial({
+            color: 0x0d0d0f,
+            roughness: 0.7
+        });
+        
+        const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        const neonGreenMat = new THREE.MeshBasicMaterial({ color: 0x39ff14 });
+        
+        const skinMat = new THREE.MeshStandardMaterial({
+            color: 0xffdbac,
+            roughness: 0.65
+        });
+        
+        // 5a. Hoodie Torso
+        const torsoGeo = new THREE.CylinderGeometry(0.42, 0.55, 1.1, 10);
+        const torso = new THREE.Mesh(torsoGeo, darkJacketMat);
+        torso.position.y = 1.25;
+        character.add(torso);
+        
+        // Glowing chest logo/WI-FI Skull indicator
+        const logoGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.03, 16);
+        logoGeo.rotateX(Math.PI / 2);
+        const logo = new THREE.Mesh(logoGeo, neonGreenMat);
+        logo.position.set(0, 1.45, 0.52);
+        character.add(logo);
+        
+        // Green lines decoration on hoodie
+        const hoodieStripeL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.8, 0.04), neonGreenMat);
+        hoodieStripeL.position.set(-0.16, 1.25, 0.51);
+        character.add(hoodieStripeL);
+        
+        const hoodieStripeR = hoodieStripeL.clone();
+        hoodieStripeR.position.x = 0.16;
+        character.add(hoodieStripeR);
+        
+        // 5b. Head
+        const headGeo = new THREE.SphereGeometry(0.38, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.y = 2.05;
+        character.add(head);
+        
+        // 5c. Hoodie Hood
+        const hoodGeo = new THREE.SphereGeometry(0.48, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.72);
+        const hood = new THREE.Mesh(hoodGeo, darkJacketMat);
+        hood.position.y = 2.08;
+        hood.rotation.x = 0.22;
+        character.add(hood);
+        
+        // 5d. Spiky Black Hair with Neon Green Highlights
+        const hairGroup = new THREE.Group();
+        hairGroup.position.set(0, 2.1, 0);
+        
+        // Standard spikes
+        const spikeGeo = new THREE.ConeGeometry(0.08, 0.26, 4);
+        const hairBlackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        
+        // Let's create multiple spikes clustered on the head
+        const spikeOffsets = [
+            { x: -0.1, y: 0.3, z: 0.15, rx: 0.2, rz: 0.3 },
+            { x: 0.1, y: 0.3, z: 0.15, rx: 0.2, rz: -0.3 },
+            { x: -0.25, y: 0.18, z: 0.1, rx: 0.1, rz: 0.6 },
+            { x: 0.25, y: 0.18, z: 0.1, rx: 0.1, rz: -0.6 },
+            { x: 0, y: 0.35, z: 0, rx: -0.1, rz: 0 },
+            { x: -0.15, y: 0.28, z: -0.15, rx: -0.3, rz: 0.4 },
+            { x: 0.15, y: 0.28, z: -0.15, rx: -0.3, rz: -0.4 },
+        ];
+        
+        spikeOffsets.forEach((o, index) => {
+            // Alternating colors to match green highlights from photo
+            const mat = (index % 3 === 0) ? neonGreenMat : hairBlackMat;
+            const spike = new THREE.Mesh(spikeGeo, mat);
+            spike.position.set(o.x, o.y, o.z);
+            spike.rotation.x = o.rx;
+            spike.rotation.z = o.rz;
+            hairGroup.add(spike);
+        });
+        character.add(hairGroup);
+        
+        // 5e. Futuristic Holographic Visor (Transparent Glowing glasses)
+        const visorGeo = new THREE.BoxGeometry(0.55, 0.14, 0.36);
+        const visorMat = new THREE.MeshStandardMaterial({
+            color: 0x00f0ff,
+            emissive: 0x00f0ff,
+            emissiveIntensity: 2.0,
+            transparent: true,
+            opacity: 0.75
+        });
+        const visor = new THREE.Mesh(visorGeo, visorMat);
+        visor.position.set(0, 2.08, 0.26);
+        character.add(visor);
+        
+        // Visor border trim line
+        const visorBorderGeo = new THREE.BoxGeometry(0.57, 0.16, 0.02);
+        const visorBorderMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const visorBorder = new THREE.Mesh(visorBorderGeo, visorBorderMat);
+        visorBorder.position.set(0, 2.08, 0.44);
+        character.add(visorBorder);
+        
+        // 5f. Cyber headphones (from photo)
+        const headphoneBandGeo = new THREE.TorusGeometry(0.42, 0.03, 8, 32, Math.PI);
+        const headphoneBand = new THREE.Mesh(headphoneBandGeo, darkJacketMat);
+        headphoneBand.position.set(0, 2.08, 0);
+        headphoneBand.rotation.z = Math.PI / 2;
+        character.add(headphoneBand);
+        
+        const headphoneCupGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.1, 16);
+        const headphoneCupL = new THREE.Mesh(headphoneCupGeo, neonGreenMat);
+        headphoneCupL.position.set(-0.4, 2.05, 0);
+        headphoneCupL.rotation.z = Math.PI / 2;
+        character.add(headphoneCupL);
+        
+        const headphoneCupR = headphoneCupL.clone();
+        headphoneCupR.position.x = 0.4;
+        character.add(headphoneCupR);
+        
+        // 5g. Cybernetic Hands/Floating arms
+        const handGeo = new THREE.SphereGeometry(0.08, 8, 8);
+        
+        const leftArmGroup = new THREE.Group();
+        leftArmGroup.position.set(-0.55, 1.25, 0.2);
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.5, 8), darkJacketMat);
+        armL.rotation.z = 0.5;
+        leftArmGroup.add(armL);
+        const handL = new THREE.Mesh(handGeo, neonCyanMat);
+        handL.position.set(-0.15, -0.3, 0.1);
+        leftArmGroup.add(handL);
+        character.add(leftArmGroup);
+        
+        const rightArmGroup = new THREE.Group();
+        rightArmGroup.position.set(0.55, 1.25, 0.2);
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.5, 8), darkJacketMat);
+        armR.rotation.z = -0.5;
+        rightArmGroup.add(armR);
+        const handR = new THREE.Mesh(handGeo, neonCyanMat);
+        handR.position.set(0.15, -0.3, 0.1);
+        rightArmGroup.add(handR);
+        character.add(rightArmGroup);
+        
+        // 5h. Legs (Pants & Knee pads from photo)
+        const legGeo = new THREE.CylinderGeometry(0.16, 0.14, 0.9, 8);
+        
+        const legL = new THREE.Mesh(legGeo, pantsMat);
+        legL.position.set(-0.2, 0.6, 0);
+        character.add(legL);
+        
+        const legR = new THREE.Mesh(legGeo, pantsMat);
+        legR.position.set(0.2, 0.6, 0);
+        character.add(legR);
+        
+        // Knee Pads (Grey rectangular boxes on front of knees)
+        const padGeo = new THREE.BoxGeometry(0.18, 0.16, 0.08);
+        const padMat = new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.5 });
+        
+        const padL = new THREE.Mesh(padGeo, padMat);
+        padL.position.set(-0.2, 0.62, 0.16);
+        character.add(padL);
+        
+        const padR = padL.clone();
+        padR.position.x = 0.2;
+        character.add(padR);
+        
+        // 5i. Sneakers with glowing cyan trims (from photo)
+        const shoeGeo = new THREE.BoxGeometry(0.18, 0.12, 0.32);
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.5 });
+        
+        const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
+        shoeL.position.set(-0.2, 0.12, 0.06);
+        character.add(shoeL);
+        
+        const shoeR = shoeL.clone();
+        shoeR.position.x = 0.2;
+        character.add(shoeR);
+        
+        // Glowing cyan base line on shoes
+        const shoeTrimGeo = new THREE.BoxGeometry(0.2, 0.02, 0.34);
+        const shoeTrimL = new THREE.Mesh(shoeTrimGeo, neonCyanMat);
+        shoeTrimL.position.set(-0.2, 0.06, 0.06);
+        character.add(shoeTrimL);
+        
+        const shoeTrimR = shoeTrimL.clone();
+        shoeTrimR.position.x = 0.2;
+        character.add(shoeTrimR);
+        
+        scene.add(character);
+        
+        // --- 6. FLOATING HOLOGRAPHIC SCREENS WITH SCROLLING CODE ---
+        const codeCanvas = document.createElement('canvas');
+        codeCanvas.width = 512;
+        codeCanvas.height = 512;
+        const codeCtx = codeCanvas.getContext('2d');
+        
+        function updateCodeCanvas() {
+            codeCtx.fillStyle = 'rgba(5, 5, 10, 0.15)';
+            codeCtx.fillRect(0, 0, 512, 512);
+            
+            codeCtx.fillStyle = '#00f0ff';
+            codeCtx.font = 'bold 20px "Fira Code", monospace';
+            
+            // Draw random lines of hex/binary
+            for(let i = 0; i < 20; i++) {
+                const text = Math.random() > 0.5 ? 
+                    'SYSTEM_BYPASS: 100%' : 
+                    `KEY_INJECT: 0x${Math.floor(Math.random()*16777215).toString(16).toUpperCase()}`;
+                const x = 10;
+                const y = (i * 26) + 20;
+                codeCtx.fillText(text, x, y);
+            }
+        }
+        
+        updateCodeCanvas();
+        const codeTexture = new THREE.CanvasTexture(codeCanvas);
+        codeTexture.wrapS = THREE.RepeatWrapping;
+        codeTexture.wrapT = THREE.RepeatWrapping;
+        
+        // Floating screen mesh left
+        const screenGeo = new THREE.PlaneGeometry(1.4, 1.1);
+        const screenMat = new THREE.MeshBasicMaterial({
+            map: codeTexture,
+            transparent: true,
+            opacity: 0.75,
+            side: THREE.DoubleSide
+        });
+        
+        const screenL = new THREE.Mesh(screenGeo, screenMat);
+        screenL.position.set(-0.8, 1.8, 0.7);
+        screenL.rotation.y = Math.PI / 6;
+        scene.add(screenL);
+        
+        // Floating screen mesh right
+        const screenGeoR = new THREE.PlaneGeometry(1.4, 0.9);
+        const screenMatR = new THREE.MeshBasicMaterial({
+            map: codeTexture,
+            transparent: true,
+            opacity: 0.65,
+            side: THREE.DoubleSide
+        });
+        
+        const screenR = new THREE.Mesh(screenGeoR, screenMatR);
+        screenR.position.set(1.5, 1.7, 0.6);
+        screenR.rotation.y = -Math.PI / 4;
+        scene.add(screenR);
+        
+        // --- 7. FALLING DIGITAL CODES (PARTICLE MATRIX RAIN) ---
+        const particleCount = 1400;
+        const particleGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 1.0 + Math.random() * 5.0;
+            positions[i * 3] = Math.cos(angle) * radius;
+            positions[i * 3 + 1] = Math.random() * 8; // Height
+            positions[i * 3 + 2] = Math.sin(angle) * radius;
+            
+            velocities[i] = 0.015 + Math.random() * 0.045; // Fall speed
+        }
+        
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        // Glowing matrix code particle texture
+        const canvasParticle = document.createElement('canvas');
+        canvasParticle.width = 16;
+        canvasParticle.height = 16;
+        const ctxP = canvasParticle.getContext('2d');
+        const grad = ctxP.createRadialGradient(8, 8, 0, 8, 8, 8);
+        grad.addColorStop(0, 'rgba(57, 255, 20, 1)');
+        grad.addColorStop(0.3, 'rgba(57, 255, 20, 0.7)');
+        grad.addColorStop(1, 'rgba(57, 255, 20, 0)');
+        ctxP.fillStyle = grad;
+        ctxP.fillRect(0, 0, 16, 16);
+        
+        const particleTexture = new THREE.CanvasTexture(canvasParticle);
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.16,
+            map: particleTexture,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        
+        const codeRain = new THREE.Points(particleGeo, particleMat);
+        scene.add(codeRain);
+        
+        // --- 8. ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        const logLines = [
+            ">> PARSING HACKER CHARACTER MESH ELEMENTS...",
+            ">> MODEL DECORATION: WI-FI CHEST DECALS MATCHED",
+            ">> SYNCING NEON GREEN SPIKY HAIR CONFIGS",
+            ">> COGNITIVE ANCHOR STATE: HOVER LEVEL ACTIVE",
+            ">> ROTATION TRACKING STATUS: STABLE"
+        ];
+        
+        let logIndex = 0;
+        const dynamicLog = document.getElementById('dynamic-log');
+        
+        setInterval(() => {
+            dynamicLog.innerText = logLines[logIndex];
+            logIndex = (logIndex + 1) % logLines.length;
+        }, 3000);
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Hover animation for character (floating effect)
+            character.position.y = 0.25 + Math.sin(elapsedTime * 2.0) * 0.06;
+            
+            // Slowly rotate character
+            character.rotation.y = elapsedTime * 0.12;
+            
+            // Float screens
+            screenL.position.y = 1.8 + Math.sin(elapsedTime * 1.5) * 0.03;
+            screenR.position.y = 1.7 + Math.cos(elapsedTime * 1.7) * 0.03;
+            
+            // Screen texture scroll
+            codeTexture.offset.y -= 0.005;
+            if(Math.floor(elapsedTime * 10) % 6 === 0) {
+                updateCodeCanvas();
+                codeTexture.needsUpdate = true;
+            }
+            
+            // Matrix code rain particles update
+            const posAttr = codeRain.geometry.attributes.position;
+            for (let i = 0; i < particleCount; i++) {
+                let y = posAttr.getY(i);
+                y -= velocities[i];
+                if (y < 0) {
+                    y = 8;
+                }
+                posAttr.setY(i, y);
+            }
+            posAttr.needsUpdate = true;
+            
+            // Slowly rotate base pedestal (opposite to character)
+            base.rotation.y = -elapsedTime * 0.04;
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // --- 9. WINDOW RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+    </script>
+</body>
+</html>

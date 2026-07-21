@@ -341,6 +341,10 @@ def run_open_app(app_name):
 def home():
     return render_template('index.html')
 
+@app.route('/3d-viewer')
+def viewer_3d():
+    return render_template('viewer_3d.html')
+
 @app.route('/api/config', methods=['GET', 'POST'])
 def config_api():
     if request.method == 'GET':
@@ -794,4 +798,4 @@ if __name__ == '__main__':
     threading.Thread(target=open_browser, daemon=True).start()
     
     # Run server on port 5001
-    app.run(host='127.0.0.1', port=5001, debug=False)
+    app.run(host='127.0.0.1', port=5001, debug=True)

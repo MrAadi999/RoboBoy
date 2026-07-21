@@ -121,6 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('activityChart')) {
         setInterval(updateTelemetryChart, 1500);
     }
+    
+    // Hacker simulator additions:
+    initWindowManager();
+    initMatrixRain();
+    initSimulatedWidgets();
+    setInterval(updateClockTray, 1000);
 });
 
 // ==========================================
@@ -191,6 +197,45 @@ function setupEventListeners() {
     if (voiceVolume && volumeVal) {
         voiceVolume.addEventListener('input', (e) => {
             volumeVal.innerText = parseInt(e.target.value) + '%';
+        });
+    }
+
+    // Keydown typing events mapping (Hacker typing animation)
+    document.addEventListener('keydown', handleKeyboardTyper);
+
+    // Terminal override command listener
+    const terminalInput = document.getElementById('terminalInput');
+    if (terminalInput) {
+        terminalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.trim();
+                if (!cmd) return;
+                terminalInput.value = '';
+                
+                const output = document.getElementById('terminalOutput');
+                if (output) {
+                    output.innerHTML += `\n<div class="terminal-line"><span class="term-prompt">root@override:~#</span> ${cmd}</div>`;
+                }
+                
+                if (cmd.toLowerCase() === 'help') {
+                    output.innerHTML += `\n<div class="terminal-line">Available commands: help, clear, nuke, crypto, scan, connect</div>`;
+                } else if (cmd.toLowerCase() === 'clear') {
+                    output.innerHTML = `<div class="terminal-line"><span class="term-prompt">root@override:~#</span> Terminal cleared.</div>`;
+                } else if (cmd.toLowerCase() === 'nuke') {
+                    openWindow('win-nuclear');
+                    triggerNuclearOverload();
+                } else if (cmd.toLowerCase() === 'crypto') {
+                    openWindow('win-miner');
+                } else if (cmd.toLowerCase() === 'scan') {
+                    openWindow('win-cctv');
+                } else if (cmd.toLowerCase() === 'connect') {
+                    openWindow('win-remote');
+                    resetRemoteTunnel();
+                } else {
+                    submitTerminalPromptToAI(cmd);
+                }
+                if (output) output.scrollTop = output.scrollHeight;
+            }
         });
     }
 }
@@ -1332,3 +1377,960 @@ function switchDiagTab(event, tabId) {
         event.currentTarget.classList.add('active');
     }
 }
+
+// System configuration state saving
+async function saveSettingsState() {
+    try {
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme: currentTheme,
+                language: currentLanguage,
+                dashboard_language: dashboardLanguage,
+                character_language: characterLanguage
+            })
+        });
+    } catch (e) {}
+}
+
+// ==========================================================================
+// DRAGGABLE & RESIZABLE WINDOW MANAGER ENGINE
+// ==========================================================================
+let activeDragWindow = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let activeResizeWindow = null;
+let startWidth = 0;
+let startHeight = 0;
+let startMouseX = 0;
+let startMouseY = 0;
+let zIndexCounter = 100;
+
+function initWindowManager() {
+    const windows = document.querySelectorAll('.window');
+    windows.forEach(win => {
+        // Hide all windows by default, except chatbot and terminal
+        if (win.id !== 'win-chatbot' && win.id !== 'win-terminal') {
+            win.style.display = 'none';
+        } else {
+            win.style.display = 'flex';
+        }
+    });
+    updateTaskbarPills();
+}
+
+function dragStart(e, windowId) {
+    if (e.target.closest('.window-controls')) return;
+    activeDragWindow = document.getElementById(windowId);
+    bringToFront(activeDragWindow);
+    
+    const rect = activeDragWindow.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+}
+
+function dragMove(e) {
+    if (!activeDragWindow) return;
+    if (activeDragWindow.classList.contains('maximized')) return;
+    
+    let left = e.clientX - dragOffsetX;
+    let top = e.clientY - dragOffsetY;
+    
+    // Boundary check
+    left = Math.max(0, Math.min(window.innerWidth - 100, left));
+    top = Math.max(0, Math.min(window.innerHeight - 80, top));
+    
+    activeDragWindow.style.left = left + 'px';
+    activeDragWindow.style.top = top + 'px';
+}
+
+function dragEnd() {
+    activeDragWindow = null;
+    document.removeEventListener('mousemove', dragMove);
+    document.removeEventListener('mouseup', dragEnd);
+}
+
+function resizeStart(e, windowId) {
+    e.stopPropagation();
+    e.preventDefault();
+    activeResizeWindow = document.getElementById(windowId);
+    bringToFront(activeResizeWindow);
+    
+    const rect = activeResizeWindow.getBoundingClientRect();
+    startWidth = rect.width;
+    startHeight = rect.height;
+    startMouseX = e.clientX;
+    startMouseY = e.clientY;
+    
+    document.addEventListener('mousemove', resizeMove);
+    document.addEventListener('mouseup', resizeEnd);
+}
+
+function resizeMove(e) {
+    if (!activeResizeWindow) return;
+    if (activeResizeWindow.classList.contains('maximized')) return;
+    
+    const newWidth = Math.max(280, startWidth + (e.clientX - startMouseX));
+    const newHeight = Math.max(150, startHeight + (e.clientY - startMouseY));
+    
+    activeResizeWindow.style.width = newWidth + 'px';
+    activeResizeWindow.style.height = newHeight + 'px';
+}
+
+function resizeEnd() {
+    activeResizeWindow = null;
+    document.removeEventListener('mousemove', resizeMove);
+    document.removeEventListener('mouseup', resizeEnd);
+}
+
+function bringToFront(win) {
+    zIndexCounter++;
+    win.style.zIndex = zIndexCounter;
+}
+
+function openWindow(windowId) {
+    const win = document.getElementById(windowId);
+    if (!win) return;
+    
+    win.classList.remove('minimized');
+    win.style.display = 'flex';
+    bringToFront(win);
+    updateTaskbarPills();
+}
+
+function closeWindow(windowId) {
+    const win = document.getElementById(windowId);
+    if (!win) return;
+    win.style.display = 'none';
+    updateTaskbarPills();
+    
+    if (windowId === 'win-nuclear') {
+        stopNuclearAlarm();
+    }
+}
+
+function minimizeWindow(windowId) {
+    const win = document.getElementById(windowId);
+    if (!win) return;
+    win.classList.add('minimized');
+    updateTaskbarPills();
+}
+
+function toggleMaximizeWindow(windowId) {
+    const win = document.getElementById(windowId);
+    if (!win) return;
+    win.classList.toggle('maximized');
+}
+
+function updateTaskbarPills() {
+    const container = document.getElementById('taskbarPills');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const programs = [
+        { id: 'win-terminal', label: '💻 terminal.exe' },
+        { id: 'win-chatbot', label: '🤖 roboboy_assistant' },
+        { id: 'win-sysinfo', label: '📊 server_status' },
+        { id: 'win-memories', label: '🧠 cognitive_logs.dat' },
+        { id: 'win-miner', label: '⛏️ btc_miner.sh' },
+        { id: 'win-cracker', label: '🔑 pass_brute.py' },
+        { id: 'win-cctv', label: '📹 cctv_scanner' },
+        { id: 'win-nuclear', label: '☢️ nuclear_core' },
+        { id: 'win-interpol', label: '📂 interpol_db' },
+        { id: 'win-remote', label: '🛰️ remote_tunnel' },
+        { id: 'win-settings', label: '⚙️ sys_config.conf' }
+    ];
+    
+    programs.forEach(prog => {
+        const win = document.getElementById(prog.id);
+        if (win && win.style.display !== 'none') {
+            const pill = document.createElement('button');
+            pill.className = 'taskbar-pill';
+            if (win.classList.contains('minimized')) {
+                pill.classList.add('minimized');
+            } else {
+                const allWindows = Array.from(document.querySelectorAll('.window')).filter(w => w.style.display !== 'none' && !w.classList.contains('minimized'));
+                let isTop = false;
+                if (allWindows.length > 0) {
+                    const topWin = allWindows.reduce((prev, current) => {
+                        return (parseInt(prev.style.zIndex) || 0) > (parseInt(current.style.zIndex) || 0) ? prev : current;
+                    });
+                    if (topWin === win) isTop = true;
+                }
+                if (isTop) pill.classList.add('active');
+            }
+            pill.innerHTML = prog.label;
+            pill.onclick = () => {
+                if (win.classList.contains('minimized')) {
+                    win.classList.remove('minimized');
+                    bringToFront(win);
+                } else {
+                    const allWindows = Array.from(document.querySelectorAll('.window')).filter(w => w.style.display !== 'none' && !w.classList.contains('minimized'));
+                    let isTop = false;
+                    if (allWindows.length > 0) {
+                        const topWin = allWindows.reduce((prev, current) => {
+                            return (parseInt(prev.style.zIndex) || 0) > (parseInt(current.style.zIndex) || 0) ? prev : current;
+                        });
+                        if (topWin === win) isTop = true;
+                    }
+                    if (isTop) {
+                        win.classList.add('minimized');
+                    } else {
+                        bringToFront(win);
+                    }
+                }
+                updateTaskbarPills();
+            };
+            container.appendChild(pill);
+        }
+    });
+}
+
+function toggleStartMenu() {
+    const menu = document.getElementById('startMenu');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+// Close start menu on outside click
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#startMenu') && !e.target.closest('.start-btn')) {
+        const menu = document.getElementById('startMenu');
+        if (menu) menu.classList.add('hidden');
+    }
+});
+
+// Tray Clock Updates
+function updateClockTray() {
+    const clock = document.getElementById('taskbarClock');
+    if (!clock) return;
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+    const dateStr = now.toISOString().slice(0, 10);
+    clock.innerHTML = `${timeStr}<br>${dateStr}`;
+}
+
+// Fullscreen
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// ==========================================================================
+// BACKGROUND SOUND CONTROLLERS
+// ==========================================================================
+let soundMuted = true;
+
+function toggleDesktopSound() {
+    soundMuted = !soundMuted;
+    const hum = document.getElementById('ambientHum');
+    const volBtn = document.getElementById('volumeToggleBtn');
+    
+    if (volBtn) volBtn.innerText = soundMuted ? '🔇' : '🔊';
+    if (!hum) return;
+    
+    if (soundMuted) {
+        hum.pause();
+        stopNuclearAlarmSound();
+    } else {
+        hum.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav';
+        hum.volume = 0.12;
+        hum.play().catch(() => {});
+        if (isNuclearCritical) {
+            playNuclearAlarmSound();
+        }
+    }
+}
+
+function playAlertBeep() {
+    if (soundMuted) return;
+    try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.2, context.currentTime);
+        osc.start();
+        osc.stop(context.currentTime + 0.12);
+    } catch (e) {}
+}
+
+// ==========================================================================
+// MATRIX CODE RAIN EFFECT
+// ==========================================================================
+function initMatrixRain() {
+    const canvas = document.getElementById('matrixRain');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+    
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$+-*/%=<>!&|^~?";
+    const fontSize = 13;
+    const columns = Math.floor(width / fontSize) + 1;
+    
+    const rainDrops = [];
+    for (let x = 0; x < columns; x++) {
+        rainDrops[x] = Math.random() * -80;
+    }
+    
+    function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.fillStyle = '#0f0';
+        ctx.font = fontSize + 'px monospace';
+        
+        for (let i = 0; i < rainDrops.length; i++) {
+            const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+            
+            if (rainDrops[i] * fontSize > height && Math.random() > 0.975) {
+                rainDrops[i] = 0;
+            }
+            rainDrops[i]++;
+        }
+    }
+    setInterval(draw, 33);
+}
+
+// ==========================================================================
+// CCTV SURVEILLANCE loop
+// ==========================================================================
+function initCCTVFeeds() {
+    setInterval(() => {
+        const cams = ['cctvCam1', 'cctvCam2', 'cctvCam3', 'cctvCam4'];
+        cams.forEach((camId) => {
+            const canvas = document.getElementById(camId);
+            if (!canvas || canvas.offsetParent === null) return;
+            const ctx = canvas.getContext('2d');
+            
+            const w = canvas.width = canvas.clientWidth;
+            const h = canvas.height = canvas.clientHeight;
+            
+            const imgData = ctx.createImageData(w, h);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const val = Math.random() * 255;
+                data[i] = val;
+                data[i+1] = val;
+                data[i+2] = val;
+                data[i+3] = 18;
+            }
+            ctx.putImageData(imgData, 0, 0);
+            
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+            ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
+            ctx.stroke();
+            
+            const scanTime = Date.now() / 1000;
+            const scanY = (scanTime * 50) % h;
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.06)';
+            ctx.fillRect(0, scanY - 8, w, 8);
+            
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '9px monospace';
+            const dateStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            ctx.fillText(dateStr, 10, h - 10);
+            
+            if (Math.floor(scanTime) % 2 === 0) {
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(w - 15, 14, 3.5, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#ff0000';
+                ctx.fillText("REC", w - 40, 18);
+            }
+        });
+    }, 50);
+}
+
+// ==========================================================================
+// BITCOIN MINER SIMULATOR
+// ==========================================================================
+let minerBtcCount = 0.00041289;
+let minerBlocksCount = 14;
+let minerChartPoints = Array(20).fill(20);
+
+function initMinerWidget() {
+    setInterval(() => {
+        const minerWin = document.getElementById('win-miner');
+        if (!minerWin || minerWin.style.display === 'none') return;
+        
+        const hashrate = (21.0 + Math.random() * 8).toFixed(2);
+        const hashrateEl = document.getElementById('minerHashrate');
+        if (hashrateEl) hashrateEl.innerText = hashrate + ' MH/s';
+        
+        minerBtcCount += 0.00000003;
+        const btcEl = document.getElementById('minerBtc');
+        if (btcEl) btcEl.innerText = minerBtcCount.toFixed(8);
+        
+        if (Math.random() > 0.98) {
+            minerBlocksCount++;
+            const blocksEl = document.getElementById('minerBlocks');
+            if (blocksEl) blocksEl.innerText = minerBlocksCount;
+            appendMinerLog(`[ stratum ] Block solved! Block #${minerBlocksCount + 592819} verified. Wallet payout acknowledged.`);
+        }
+        
+        if (Math.random() > 0.75) {
+            const nonces = Math.floor(Math.random() * 800000);
+            appendMinerLog(`[ worker_0 ] nonce: 0x${nonces.toString(16).toUpperCase()} ... Hash verified.`);
+        }
+        
+        drawMinerChart();
+    }, 1500);
+}
+
+function appendMinerLog(text) {
+    const log = document.getElementById('minerLog');
+    if (!log) return;
+    log.innerHTML += `\n${text}`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function drawMinerChart() {
+    const canvas = document.getElementById('minerCanvasChart');
+    if (!canvas || canvas.offsetParent === null) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth;
+    const h = canvas.height = canvas.clientHeight;
+    
+    minerChartPoints.shift();
+    minerChartPoints.push(25 + Math.random() * 35);
+    
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#33ff33';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    
+    const step = w / (minerChartPoints.length - 1);
+    ctx.moveTo(0, h - minerChartPoints[0]);
+    for (let i = 1; i < minerChartPoints.length; i++) {
+        ctx.lineTo(i * step, h - minerChartPoints[i]);
+    }
+    ctx.stroke();
+    
+    ctx.fillStyle = 'rgba(51, 255, 51, 0.05)';
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+}
+
+// ==========================================================================
+// PASSWORD CRACKER / BRUTEFORCER
+// ==========================================================================
+let crackerPercentageVal = 0;
+
+function initPasswordCracker() {
+    const grid = document.getElementById('crackerHexGrid');
+    if (grid) {
+        let hexStr = "";
+        for (let i = 0; i < 480; i++) {
+            hexStr += Math.floor(Math.random()*16).toString(16).toUpperCase();
+        }
+        grid.innerText = hexStr;
+    }
+    
+    setInterval(() => {
+        const crackerWin = document.getElementById('win-cracker');
+        if (!crackerWin || crackerWin.style.display === 'none' || crackerPercentageVal >= 100) return;
+        
+        if (grid) {
+            let hexArr = grid.innerText.split('');
+            for (let k = 0; k < 12; k++) {
+                const idx = Math.floor(Math.random() * hexArr.length);
+                hexArr[idx] = Math.floor(Math.random()*16).toString(16).toUpperCase();
+            }
+            grid.innerText = hexArr.join('');
+        }
+        
+        const display = document.getElementById('crackerPasswordDisplay');
+        if (display) {
+            const alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+            let pass = "";
+            for (let i = 0; i < 8; i++) {
+                pass += alph.charAt(Math.floor(Math.random() * alph.length));
+            }
+            display.innerText = "TRYING: " + pass;
+        }
+    }, 100);
+    
+    setInterval(() => {
+        const crackerWin = document.getElementById('win-cracker');
+        if (!crackerWin || crackerWin.style.display === 'none') return;
+        
+        if (crackerPercentageVal < 100) {
+            crackerPercentageVal += Math.floor(Math.random() * 4) + 1;
+            if (crackerPercentageVal >= 100) {
+                crackerPercentageVal = 100;
+                showCrackerSuccess();
+            }
+            
+            const pct = document.getElementById('crackerPercentage');
+            const bar = document.getElementById('crackerBar');
+            if (pct) pct.innerText = crackerPercentageVal + "%";
+            if (bar) bar.style.width = crackerPercentageVal + "%";
+        }
+    }, 900);
+}
+
+function showCrackerSuccess() {
+    const success = document.getElementById('crackerSuccess');
+    if (success) {
+        success.classList.remove('hidden');
+        const keyEl = document.getElementById('crackedKey');
+        if (keyEl) keyEl.innerText = "ADMIN_KEY: " + Math.random().toString(16).substring(2, 10).toUpperCase();
+        playAlertBeep();
+    }
+}
+
+function resetPasswordCracker() {
+    crackerPercentageVal = 0;
+    const pct = document.getElementById('crackerPercentage');
+    const bar = document.getElementById('crackerBar');
+    const success = document.getElementById('crackerSuccess');
+    if (pct) pct.innerText = "0%";
+    if (bar) bar.style.width = "0%";
+    if (success) success.classList.add('hidden');
+}
+
+// ==========================================================================
+// NUCLEAR FUSION CORE SIMULATOR
+// ==========================================================================
+let nuclearTemperatureVal = 324.5;
+let nuclearPressureVal = 1.04;
+let nuclearFlowVal = 85.4;
+let isNuclearCritical = false;
+let nuclearChartPoints = Array(30).fill(25);
+
+function initNuclearReactor() {
+    setInterval(() => {
+        const nuclearWin = document.getElementById('win-nuclear');
+        if (!nuclearWin || nuclearWin.style.display === 'none') return;
+        
+        let tempDiff = 0.4 + Math.random() * 0.7;
+        const flowOffset = (nuclearFlowVal - 80) * 0.05;
+        nuclearTemperatureVal += (tempDiff - flowOffset);
+        
+        if (nuclearTemperatureVal < 100) nuclearTemperatureVal = 100;
+        nuclearPressureVal = (nuclearTemperatureVal / 310).toFixed(2);
+        
+        const tempEl = document.getElementById('nuclearTemp');
+        const pressEl = document.getElementById('nuclearPressure');
+        const flowEl = document.getElementById('nuclearFlow');
+        
+        if (tempEl) tempEl.innerText = nuclearTemperatureVal.toFixed(1) + " °C";
+        if (pressEl) pressEl.innerText = nuclearPressureVal + " bar";
+        if (flowEl) flowEl.innerText = nuclearFlowVal.toFixed(1) + " L/s";
+        
+        if (nuclearTemperatureVal > 600 && !isNuclearCritical) {
+            triggerNuclearAlarm();
+        } else if (nuclearTemperatureVal <= 600 && isNuclearCritical) {
+            stopNuclearAlarm();
+        }
+        drawReactorCanvas();
+    }, 1000);
+}
+
+function adjustNuclearCoolant(val) {
+    nuclearFlowVal += val;
+    if (nuclearFlowVal < 0) nuclearFlowVal = 0;
+    if (nuclearFlowVal > 150) nuclearFlowVal = 150;
+    showToast(`Coolant flow set to ${nuclearFlowVal.toFixed(1)} L/s.`, isNuclearCritical ? "error" : "success");
+}
+
+function triggerNuclearOverload() {
+    nuclearTemperatureVal = 820.0;
+    nuclearFlowVal = 0;
+    showToast("CRITICAL COMMAND: Coolant loop override deactivated.", "error");
+    triggerNuclearAlarm();
+}
+
+function resetNuclearReactor() {
+    nuclearTemperatureVal = 324.5;
+    nuclearFlowVal = 85.4;
+    stopNuclearAlarm();
+    showToast("Reactor baseline safety parameters restored.", "success");
+}
+
+function triggerNuclearAlarm() {
+    isNuclearCritical = true;
+    const box = document.getElementById('nuclearAlarmBox');
+    const msg = document.getElementById('nuclearStatusMsg');
+    
+    if (box) box.className = 'nuclear-alert-panel critical-alert';
+    if (msg) msg.innerText = "WARNING: CORE MELTDOWN IMMINENT!";
+    
+    document.body.classList.add('screen-shake');
+    playNuclearAlarmSound();
+}
+
+function stopNuclearAlarm() {
+    isNuclearCritical = false;
+    const box = document.getElementById('nuclearAlarmBox');
+    const msg = document.getElementById('nuclearStatusMsg');
+    
+    if (box) box.className = 'nuclear-alert-panel';
+    if (msg) msg.innerText = "SYSTEM OPERATION: NORMAL";
+    
+    document.body.classList.remove('screen-shake');
+    stopNuclearAlarmSound();
+}
+
+function playNuclearAlarmSound() {
+    if (soundMuted) return;
+    const siren = document.getElementById('alarmSiren');
+    if (!siren) return;
+    siren.src = 'https://assets.mixkit.co/active_storage/sfx/951/951-84.wav';
+    siren.volume = 0.22;
+    siren.play().catch(() => {});
+}
+
+function stopNuclearAlarmSound() {
+    const siren = document.getElementById('alarmSiren');
+    if (siren) siren.pause();
+}
+
+function drawReactorCanvas() {
+    const canvas = document.getElementById('nuclearCanvas');
+    if (!canvas || canvas.offsetParent === null) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth;
+    const h = canvas.height = canvas.clientHeight;
+    
+    nuclearChartPoints.shift();
+    const normalizedTemp = Math.min(h - 8, Math.max(8, (nuclearTemperatureVal / 900) * h));
+    nuclearChartPoints.push(normalizedTemp);
+    
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = isNuclearCritical ? '#ff3333' : '#33ff33';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    
+    const step = w / (nuclearChartPoints.length - 1);
+    ctx.moveTo(0, h - nuclearChartPoints[0]);
+    for (let i = 1; i < nuclearChartPoints.length; i++) {
+        ctx.lineTo(i * step, h - nuclearChartPoints[i]);
+    }
+    ctx.stroke();
+}
+
+// ==========================================================================
+// INTERPOL WANTS NOTICE SEARCH DATABASE
+// ==========================================================================
+const interpolProfiles = [
+    { name: "Kevin Mitnick", alias: "Condor", charges: "Computer bypass, systemic wire fraud, code compromise", origin: "United States", status: "CAPTURED", emoji: "🕵️" },
+    { name: "Viktor Bout", alias: "Merchant of Death", charges: "Conspiracy armaments payload logistics", origin: "Russia", status: "CAPTURED", emoji: "💣" },
+    { name: "Edward Snowden", alias: "Whistleblower", charges: "Unsanctioned disclosure of national security database logs", origin: "United States", status: "WANTED", emoji: "📄" },
+    { name: "John Doe", alias: "Shadowman", charges: "SQL injector bank heist, ransomware syndicate leader", origin: "Unknown", status: "WANTED", emoji: "🎭" }
+];
+
+function initInterpolDatabase() {
+    filterInterpolProfiles();
+}
+
+function filterInterpolProfiles() {
+    const searchVal = document.getElementById('interpolSearch').value.toLowerCase();
+    const container = document.getElementById('interpolList');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    interpolProfiles.forEach((profile, index) => {
+        if (profile.name.toLowerCase().includes(searchVal) || profile.alias.toLowerCase().includes(searchVal)) {
+            const item = document.createElement('div');
+            item.className = 'interpol-item';
+            item.innerText = `${profile.emoji} ${profile.name} [${profile.alias}]`;
+            item.onclick = () => selectInterpolProfile(index, item);
+            container.appendChild(item);
+        }
+    });
+}
+
+function selectInterpolProfile(index, element) {
+    const items = document.querySelectorAll('.interpol-item');
+    items.forEach(item => item.classList.remove('active'));
+    element.classList.add('active');
+    
+    const container = document.getElementById('interpolProfileDetail');
+    if (!container) return;
+    
+    const profile = interpolProfiles[index];
+    
+    container.innerHTML = `
+        <div style="text-align: center; padding: 25px;">
+            <div>DECRYPTING ENCRYPTED FILE DATA...</div>
+            <div class="progress-bar-wrap" style="width: 140px; margin: 8px auto;">
+                <div class="progress-bar-fill" id="fingerprintBar" style="width: 0%; height: 100%;"></div>
+            </div>
+        </div>
+    `;
+    
+    // Colorize scanning bar by active theme
+    const bar = document.getElementById('fingerprintBar');
+    if (bar) bar.style.backgroundColor = 'var(--text-primary)';
+    
+    let pct = 0;
+    const scanInterval = setInterval(() => {
+        if (pct < 100) {
+            pct += 25;
+            if (bar) bar.style.width = pct + '%';
+            if (pct >= 100) {
+                clearInterval(scanInterval);
+                renderProfileDossier(profile);
+            }
+        }
+    }, 150);
+}
+
+function renderProfileDossier(profile) {
+    const container = document.getElementById('interpolProfileDetail');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="interpol-header-card">
+            <div class="interpol-photo">${profile.emoji}</div>
+            <div class="interpol-header-info">
+                <h4>${profile.name}</h4>
+                <div class="interpol-lbl">ALIAS: "${profile.alias.toUpperCase()}"</div>
+                <span class="interpol-status-badge ${profile.status.toLowerCase()}">${profile.status}</span>
+            </div>
+        </div>
+        <div class="interpol-details-grid">
+            <span class="interpol-lbl">Charges:</span>
+            <span>${profile.charges}</span>
+            <span class="interpol-lbl">Origin:</span>
+            <span>${profile.origin}</span>
+            <span class="interpol-lbl">Threat:</span>
+            <span class="text-red">LEVEL 9 (CRITICAL)</span>
+            <span class="interpol-lbl">File logs:</span>
+            <span>COMPROMISED (LOCKED)</span>
+        </div>
+    `;
+    playAlertBeep();
+}
+
+// ==========================================================================
+// REMOTE CONNECTION TUNNEL
+// ==========================================================================
+let remoteHopsCount = 0;
+let radarAngle = 0;
+
+function initRemoteTunnel() {
+    const canvas = document.getElementById('remoteCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        setInterval(() => {
+            if (canvas.offsetParent === null) return;
+            const w = canvas.width = canvas.clientWidth;
+            const h = canvas.height = canvas.clientHeight;
+            const cx = w / 2;
+            const cy = h / 2;
+            const radius = Math.min(cx, cy) - 8;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.strokeStyle = 'rgba(189, 0, 255, 0.16)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.6, 0, 2*Math.PI);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(cx - radius, cy); ctx.lineTo(cx + radius, cy);
+            ctx.moveTo(cx, cy - radius); ctx.lineTo(cx, cy + radius);
+            ctx.stroke();
+            
+            radarAngle += 0.04;
+            const targetX = cx + Math.cos(radarAngle) * radius;
+            const targetY = cy + Math.sin(radarAngle) * radius;
+            
+            ctx.strokeStyle = 'var(--text-primary)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+            
+            ctx.fillStyle = 'var(--text-primary)';
+            ctx.beginPath();
+            ctx.arc(cx + 35, cy - 15, 2.5, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.font = '8px monospace';
+            ctx.fillText("NODE: 10.22.45.109", cx + 40, cy - 12);
+        }, 45);
+    }
+    
+    setInterval(() => {
+        const remoteWin = document.getElementById('win-remote');
+        if (!remoteWin || remoteWin.style.display === 'none') return;
+        
+        if (remoteHopsCount < 8) {
+            remoteHopsCount++;
+            const hopsEl = document.getElementById('remoteHops');
+            const bar = document.getElementById('remoteBar');
+            if (hopsEl) hopsEl.innerText = `${remoteHopsCount}/8 hops`;
+            if (bar) bar.style.width = (remoteHopsCount / 8 * 100) + '%';
+            
+            const logs = [
+                "Bouncing proxy parameters... resolving IP route.",
+                "Hop 1: London, UK established (Ping: 45ms)",
+                "Hop 2: Reykjavik, Iceland connected (Ping: 90ms)",
+                "Hop 3: Vancouver, Canada encryption tunnel active",
+                "Hop 4: Tokyo, Japan proxy redirect validated",
+                "Hop 5: Beijing, China proxy bypass successful",
+                "Hop 6: Moscow, Russia node connected (Ping: 140ms)",
+                "Hop 7: Sydney, Australia re-routed due to lag",
+                "Hop 8: Terminal connection node handshake established."
+            ];
+            appendRemoteConsole(`[TUNNEL] ${logs[remoteHopsCount]}`);
+            
+            if (remoteHopsCount === 8) {
+                appendRemoteConsole(`[TUNNEL SUCCESS] Safe remote shell proxy connected. Port 22 decrypted.`);
+                playAlertBeep();
+            }
+        }
+    }, 2500);
+}
+
+function appendRemoteConsole(text) {
+    const log = document.getElementById('remoteConsole');
+    if (log) {
+        log.innerHTML += `<br>${text}`;
+        log.scrollTop = log.scrollHeight;
+    }
+}
+
+function resetRemoteTunnel() {
+    remoteHopsCount = 0;
+    const hopsEl = document.getElementById('remoteHops');
+    const bar = document.getElementById('remoteBar');
+    if (hopsEl) hopsEl.innerText = "0/8 hops";
+    if (bar) bar.style.width = "0%";
+    const log = document.getElementById('remoteConsole');
+    if (log) log.innerHTML = "[READY] Tunnel connection queue initialized.";
+}
+
+// ==========================================================================
+// KEYBOARD SIMULATOR AUTO-TYPER & COMMAND INTEGRATION
+// ==========================================================================
+const hackerCodeSnippet = `
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main(int argc, char** argv) {
+    printf("Initializing kernel hijack...\\n");
+    sleep(1);
+    
+    char* sysBuffer = (char*)malloc(1024 * sizeof(char));
+    if (!sysBuffer) {
+        fprintf(stderr, "Buffer leak fatal allocation.\\n");
+        return 1;
+    }
+    
+    int fd = connect_to_override_daemon("127.0.0.1", 4444);
+    if (fd < 0) {
+        printf("Override daemon mismatch. Injecting payload bypass...\\n");
+        inject_binary_payload(sysBuffer);
+    }
+    
+    int bytes = write(fd, "GET_SYSTEM_ACCESS", 17);
+    if (bytes == 17) {
+        printf("Payload signature verified. Root shell spawning...\\n");
+    }
+    
+    printf("Access parameters override successful. Enjoy root command session.\\n");
+    free(sysBuffer);
+    return 0;
+}
+`;
+
+let hackerCodeIndex = 0;
+
+function handleKeyboardTyper(e) {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT') {
+        return;
+    }
+    
+    const terminalWin = document.getElementById('win-terminal');
+    if (!terminalWin || terminalWin.style.display === 'none' || terminalWin.classList.contains('minimized')) {
+        return;
+    }
+    
+    const output = document.getElementById('terminalOutput');
+    if (!output) return;
+    
+    const charsToAdd = hackerCodeSnippet.substring(hackerCodeIndex, hackerCodeIndex + 3);
+    hackerCodeIndex += 3;
+    if (hackerCodeIndex >= hackerCodeSnippet.length) {
+        hackerCodeIndex = 0;
+    }
+    
+    output.innerText += charsToAdd;
+    output.scrollTop = output.scrollHeight;
+}
+
+async function submitTerminalPromptToAI(text) {
+    const output = document.getElementById('terminalOutput');
+    if (!output) return;
+    
+    output.innerHTML += `\n<div class="terminal-line"><span class="term-prompt">Lina // System response:</span> Analyzing query...</div>`;
+    output.scrollTop = output.scrollHeight;
+    
+    try {
+        const response = await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                command: text,
+                history: chatHistory
+            })
+        });
+        
+        const data = await response.json();
+        chatHistory.push({ role: 'user', text: text });
+        chatHistory.push({ role: 'model', text: data.response });
+        
+        output.innerHTML += `\n<div class="terminal-line"><span class="term-prompt">Lina // System response:</span> ${data.response}</div>`;
+        speakText(data.response);
+        updateSidebarBadges();
+    } catch(e) {
+        output.innerHTML += `\n<div class="terminal-line"><span class="term-prompt">Lina // System error:</span> Connection mismatch.</div>`;
+    }
+    output.scrollTop = output.scrollHeight;
+}
+
+// Global simulated loops registry initializer
+function initSimulatedWidgets() {
+    initCCTVFeeds();
+    initMinerWidget();
+    initPasswordCracker();
+    initNuclearReactor();
+    initInterpolDatabase();
+    initRemoteTunnel();
+}
+

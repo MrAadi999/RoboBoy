@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/app_state.dart';
 import 'package:frontend/theme.dart';
+import 'package:frontend/screens/auth_screen.dart'; // To use TerminalGridPainter
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,11 +23,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (success) {
       _factController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.translate("new_context_saved"))),
+        SnackBar(
+          content: Text("SYS_SUCCESS: Context injected into memory registry.", style: const TextStyle(fontFamily: 'monospace')),
+          backgroundColor: AadiTheme.hackerCard,
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.translate("failed_save_memory"))),
+        SnackBar(
+          content: Text("SYS_ERR: Failed to write context data.", style: const TextStyle(fontFamily: 'monospace')),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
@@ -36,7 +43,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final success = await state.deleteOldMemory(id);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.translate("memory_deleted"))),
+        SnackBar(
+          content: Text("SYS_SUCCESS: Registry key purged successfully.", style: const TextStyle(fontFamily: 'monospace')),
+          backgroundColor: AadiTheme.hackerCard,
+        ),
       );
     }
   }
@@ -45,162 +55,212 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final state = Provider.of<AppState>(context);
     final theme = Theme.of(context);
+    final isDark = state.isDarkTheme;
+
+    final Color primaryColor = isDark ? AadiTheme.hackerGreen : AadiTheme.primarySaffron;
+    final Color secondaryColor = isDark ? AadiTheme.hackerCyan : AadiTheme.secondaryCyan;
+    final Color terminalBg = isDark ? AadiTheme.hackerBg : AadiTheme.lightBg;
+    final Color terminalCard = isDark ? AadiTheme.hackerCard : AadiTheme.lightCard;
 
     // Extract user username prefix from contact email/phone
-    String username = "Aadi";
+    String username = "AADI";
     if (state.phoneOrEmail.isNotEmpty) {
       final parts = state.phoneOrEmail.split('@');
-      username = parts[0];
-      // Capitalize first letter
-      username = username[0].toUpperCase() + username.substring(1);
+      username = parts[0].toUpperCase();
     }
 
     return Scaffold(
+      backgroundColor: terminalBg,
       appBar: AppBar(
-        title: Text(state.translate("memory_title")),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Indian-style personalized greeting card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AadiTheme.primarySaffron, Color(0xFFC75200)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AadiTheme.primarySaffron.withOpacity(0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${state.translate("namaste")}, $username!",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    state.translate("memory_desc"),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFFE5E7EB), // Soft white/grey
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Form to add a new memory
-            Text(
-              state.translate("add_details"),
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _factController,
-                    decoration: InputDecoration(
-                      hintText: state.translate("add_details_hint"),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: _addFact,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AadiTheme.secondaryCyan,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Fact List Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  state.translate("remembered_facts"),
-                  style: theme.textTheme.titleMedium,
-                ),
-                Text(
-                  "${state.memories.length} ${state.translate("facts_total")}",
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Fact List
-            Expanded(
-              child: state.memories.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.psychology_outlined, size: 48, color: Colors.grey),
-                        const SizedBox(height: 12),
-                        Text(
-                          state.translate("no_memory"),
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                        Text(
-                          state.translate("tell_aadi"),
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: state.memories.length,
-                    itemBuilder: (context, index) {
-                      final item = state.memories[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 6.0),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: ListTile(
-                          leading: const Icon(Icons.star_border, color: AadiTheme.primarySaffron),
-                          title: Text(item["fact"] ?? ""),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            onPressed: () => _deleteFact(item["id"]),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-            ),
-          ],
+        title: Text(
+          isDark ? "AADI_AI // MEMORY_CORE_REGISTRY" : "Memory Core Registry",
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(
+            color: isDark ? AadiTheme.hackerGreen.withOpacity(0.3) : theme.dividerColor,
+            height: 1.0,
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          if (isDark)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: TerminalGridPainter(),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Indian-style personalized greeting card styled as diagnostics terminal
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: terminalCard.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark ? AadiTheme.hackerGreen.withOpacity(0.5) : Colors.orange.shade300,
+                      width: 1.5,
+                    ),
+                    boxShadow: isDark ? [
+                      BoxShadow(
+                        color: AadiTheme.hackerGreen.withOpacity(0.05),
+                        blurRadius: 10,
+                      )
+                    ] : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isDark ? "SYS_USER: $username" : "Namaste, $username!",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isDark 
+                          ? "REGISTRY_PATH: sqlite:///aadi_ai.db/memory\n"
+                            "STATUS: SECTORS_SYNCHRONIZED\n"
+                            "TRAVERSAL MODE: READ_WRITE\n\n"
+                            "Context registries allow Fugu and Odysseus to retain deep memory on custom constraints."
+                          : "This panel stores persistent facts and memories that Aadi AI uses to contextualize your schedules, traffic warnings, and custom queries.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? AadiTheme.hackerTextSecondary : Colors.black87,
+                          fontFamily: 'monospace',
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Form to add a new memory
+                Text(
+                  isDark ? "WRITE_NEW_CONTEXT_KEY >" : "Add custom context facts",
+                  style: isDark ? const TextStyle(color: AadiTheme.hackerCyan, fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 13) : theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _factController,
+                        style: TextStyle(fontFamily: isDark ? 'monospace' : null, color: isDark ? AadiTheme.hackerGreen : null),
+                        decoration: InputDecoration(
+                          hintText: isDark ? "Enter custom context data..." : "Add details...",
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: _addFact,
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.transparent : AadiTheme.secondaryCyan,
+                          border: isDark ? Border.all(color: AadiTheme.hackerGreen, width: 1.5) : null,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.add_to_photos_outlined,
+                          color: isDark ? AadiTheme.hackerGreen : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Fact List Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isDark ? "ACTIVE_REGISTRY_KEYS" : "Remembered facts",
+                      style: isDark ? const TextStyle(color: AadiTheme.hackerGreen, fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 13) : theme.textTheme.titleMedium,
+                    ),
+                    Text(
+                      isDark ? "[TOTAL_KEYS: ${state.memories.length}]" : "${state.memories.length} facts in memory",
+                      style: TextStyle(color: isDark ? AadiTheme.hackerCyan : Colors.grey, fontFamily: 'monospace', fontSize: 11),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Fact List
+                Expanded(
+                  child: state.memories.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.query_stats_outlined, size: 48, color: primaryColor.withOpacity(0.5)),
+                            const SizedBox(height: 12),
+                            Text(
+                              isDark ? "NO_MEMORY_REGISTRIES_FOUND" : "No persistent memories found.",
+                              style: TextStyle(color: isDark ? AadiTheme.hackerTextSecondary : Colors.grey, fontFamily: 'monospace'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: state.memories.length,
+                        itemBuilder: (context, index) {
+                          final item = state.memories[index];
+                          final idText = index.toString().padLeft(3, '0');
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6.0),
+                            decoration: BoxDecoration(
+                              color: terminalCard.withOpacity(0.8),
+                              border: Border.all(color: isDark ? AadiTheme.hackerGreen.withOpacity(0.2) : Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: ListTile(
+                              leading: Text(
+                                "[REG_$idText]",
+                                style: TextStyle(
+                                  color: isDark ? AadiTheme.hackerCyan : AadiTheme.primarySaffron,
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              title: Text(
+                                item["fact"] ?? "",
+                                style: TextStyle(
+                                  color: isDark ? AadiTheme.hackerGreen : Colors.black87,
+                                  fontFamily: isDark ? 'monospace' : null,
+                                  fontSize: 13
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent, size: 20),
+                                tooltip: isDark ? "PURGE_KEY" : "Delete Memory",
+                                onPressed: () => _deleteFact(item["id"]),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

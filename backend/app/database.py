@@ -160,7 +160,7 @@ class ECommerceOrder(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    order_id = Column(String, unique=True, index=True, nullable=False)
+    order_id = Column(String, index=True, nullable=False)
     vendor = Column(String, nullable=False)  # "Flipkart", "Amazon"
     item = Column(String, nullable=False)
     status = Column(String, nullable=False)  # "Delayed", "Shipped", "Processing", "Delivered"
