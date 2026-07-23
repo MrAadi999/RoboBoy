@@ -1682,30 +1682,108 @@ function initMatrixRain() {
         height = canvas.height = window.innerHeight;
     });
     
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$+-*/%=<>!&|^~?";
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$+-*/%=<>!&|^~?#@";
     const fontSize = 13;
     const columns = Math.floor(width / fontSize) + 1;
     
     const rainDrops = [];
+    const upDrops = [];
+    const colTypes = [];
+    const snippetIndices = [];
+    
+    const codeSnippets = [
+        "function hack_node(target) {",
+        "  const sys = connect(target.ip);",
+        "  sys.inject_payload(0x7F40);",
+        "  return sys.bypass_auth();",
+        "}",
+        "COMPILING_CYBER_NODES...",
+        "EXPLOIT_STATUS: INJECTED",
+        "while(true) { scan_port(); }",
+        "0x7FFF0042 ALLOCATING MEMORY...",
+        "SSL_HANDSHAKE_OVERRIDE_OK",
+        "import socket, ssl, sys, os",
+        "if (access == GRANTED) run();",
+        "DECRYPTING_AES256_KEY...",
+        "SYSTEM_OVERRIDE_V9.8 ACTIVE",
+        "const payload = crypto.cipher();",
+        "ROOT_ACCESS_GRANTED = true;",
+        "kernel.patch_memory_table();"
+    ];
+
     for (let x = 0; x < columns; x++) {
         rainDrops[x] = Math.random() * -80;
+        upDrops[x] = Math.floor(height / fontSize) + Math.random() * 80;
+        
+        const rand = Math.random();
+        if (rand < 0.50) {
+            colTypes[x] = 'down';
+        } else if (rand < 0.75) {
+            colTypes[x] = 'up_char';
+        } else {
+            colTypes[x] = 'up_code';
+            snippetIndices[x] = {
+                lineIdx: Math.floor(Math.random() * codeSnippets.length),
+                charOffset: 0
+            };
+        }
     }
     
     function draw() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
         ctx.fillRect(0, 0, width, height);
         
-        ctx.fillStyle = '#0f0';
         ctx.font = fontSize + 'px monospace';
+        const totalRows = Math.floor(height / fontSize) + 1;
         
-        for (let i = 0; i < rainDrops.length; i++) {
-            const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-            ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+        for (let i = 0; i < columns; i++) {
+            const xPos = i * fontSize;
+            const type = colTypes[i];
             
-            if (rainDrops[i] * fontSize > height && Math.random() > 0.975) {
-                rainDrops[i] = 0;
+            if (type === 'down') {
+                // Downward matrix rain
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillStyle = '#00ff33';
+                ctx.fillText(text, xPos, rainDrops[i] * fontSize);
+                
+                if (rainDrops[i] * fontSize > height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            } 
+            else if (type === 'up_char') {
+                // Upward streaming matrix characters (Bottom to Top)
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillStyle = '#00ff66';
+                ctx.fillText(text, xPos, upDrops[i] * fontSize);
+                
+                // Glowing head
+                ctx.fillStyle = '#aaffcc';
+                ctx.fillText(alphabet.charAt(Math.floor(Math.random() * alphabet.length)), xPos, (upDrops[i] - 1) * fontSize);
+                
+                if (upDrops[i] * fontSize < 0 && Math.random() > 0.975) {
+                    upDrops[i] = totalRows + Math.random() * 20;
+                }
+                upDrops[i] -= 0.85;
             }
-            rainDrops[i]++;
+            else if (type === 'up_code') {
+                // Upward streaming hacker code text
+                const info = snippetIndices[i];
+                const snippet = codeSnippets[info.lineIdx];
+                const charChar = snippet.charAt(info.charOffset % snippet.length);
+                
+                ctx.fillStyle = '#33ffaa';
+                ctx.fillText(charChar, xPos, upDrops[i] * fontSize);
+                
+                info.charOffset++;
+                
+                if (upDrops[i] * fontSize < 0 && Math.random() > 0.95) {
+                    upDrops[i] = totalRows + Math.random() * 20;
+                    info.lineIdx = Math.floor(Math.random() * codeSnippets.length);
+                    info.charOffset = 0;
+                }
+                upDrops[i] -= 0.75;
+            }
         }
     }
     setInterval(draw, 33);
