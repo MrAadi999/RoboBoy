@@ -22,6 +22,42 @@
     <!-- DESKTOP CONTAINER -->
     <div class="desktop" id="desktop">
         
+        <!-- HUD Sci-Fi Cyber Overlay (Pinterest Hacker Screen Style) -->
+        <div class="cyber-hud-overlay" id="cyberHudOverlay">
+            <!-- Top HUD Bar -->
+            <div class="hud-top-bar">
+                <div class="hud-left-info">
+                    <span class="hud-code-tag">0147 - INF . 0215'</span>
+                    <span class="hud-tab active">BIO DIAGNOSTIC</span>
+                    <span class="hud-tab">SEARCH</span>
+                    <span class="hud-tab">OPERATION</span>
+                    <span class="hud-tab">SECURITY</span>
+                </div>
+                <div class="hud-right-info">
+                    <span class="bpm-pulse">🔥 HEART RATE: <strong id="hudBpm">160</strong> BPM</span>
+                    <span class="hud-status-badge">TARGET LOCKED</span>
+                </div>
+            </div>
+
+            <!-- Upward Line-Numbered Code Column (Left overlay) -->
+            <div class="hud-left-codestream" id="hudLeftCodeStream"></div>
+
+            <!-- Bio Fingerprint HUD Scanner Widget -->
+            <div class="hud-fingerprint-box">
+                <div class="hud-fp-header">BIO AUTH // FINGERPRINT SCAN</div>
+                <div class="hud-fp-graphic">
+                    <div class="fp-laser-sweep"></div>
+                    <svg viewBox="0 0 100 100" class="fp-svg">
+                        <path d="M50,15 A35,35 0 0,1 85,50 A35,35 0 0,1 50,85 A35,35 0 0,1 15,50 A35,35 0 0,1 50,15 Z" fill="none" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="4 2" />
+                        <path d="M50,25 A25,25 0 0,1 75,50 A25,25 0 0,1 50,75 A25,25 0 0,1 25,50 A25,25 0 0,1 50,25 Z" fill="none" stroke="#33ff33" stroke-width="2" />
+                        <path d="M50,35 A15,15 0 0,1 65,50 A15,15 0 0,1 50,65 A15,15 0 0,1 35,50 A15,15 0 0,1 50,35 Z" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="3 3" />
+                        <circle cx="50" cy="50" r="4" fill="#33ff33" />
+                    </svg>
+                </div>
+                <div class="hud-fp-status">MATCH: 99.8% | LEVEL 5 GRANTED</div>
+            </div>
+        </div>
+
         <!-- Desktop Icons Grid -->
         <div class="desktop-grid">
             <div class="desktop-icon" onclick="openWindow('win-terminal')" title="Open Terminal Console">

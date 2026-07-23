@@ -2402,6 +2402,57 @@ async function submitTerminalPromptToAI(text) {
     output.scrollTop = output.scrollHeight;
 }
 
+function initHudCodeStream() {
+    const streamContainer = document.getElementById('hudLeftCodeStream');
+    if (!streamContainer) return;
+    
+    const linesPool = [
+        "return _Selected;",
+        "float m_BarHeight = GetBottomBarHeight();",
+        "if (GetListFilterState() == Search) {",
+        "    EditorGUI.kWindowTool.DrawHeader();",
+        "}",
+        "int count = node.children.Count;",
+        "kernel.patch_memory_table();",
+        "SSLHandshake.Override();",
+        "system.inject_binary(0x7FFF0042);",
+        "char* sysBuffer = (char*)malloc(1024);",
+        "void* addr = mmap(NULL, 4096, PROT_READ|PROT_WRITE);",
+        "if (addr == MAP_FAILED) return ERROR_MEM;",
+        "socket.bind('127.0.0.1', 8080);",
+        "payload.signature = verify_rsa_key();",
+        "ROOT_ACCESS_GRANTED = true;",
+        "while(status.active) { poll_events(); }"
+    ];
+
+    let currentLineNum = 112;
+
+    setInterval(() => {
+        const randomLine = linesPool[Math.floor(Math.random() * linesPool.length)];
+        const lineEl = document.createElement('div');
+        lineEl.className = 'hud-code-line';
+        lineEl.innerHTML = `<span class="hud-line-num">${currentLineNum}</span><span class="hud-code-txt">${randomLine}</span>`;
+        
+        streamContainer.appendChild(lineEl);
+        currentLineNum++;
+        if (currentLineNum > 450) currentLineNum = 112;
+
+        if (streamContainer.children.length > 25) {
+            streamContainer.removeChild(streamContainer.firstChild);
+        }
+        streamContainer.scrollTop = streamContainer.scrollHeight;
+    }, 180);
+}
+
+function initHudBpm() {
+    const bpmEl = document.getElementById('hudBpm');
+    if (!bpmEl) return;
+    setInterval(() => {
+        const bpm = 158 + Math.floor(Math.random() * 7);
+        bpmEl.innerText = bpm;
+    }, 1500);
+}
+
 // Global simulated loops registry initializer
 function initSimulatedWidgets() {
     initCCTVFeeds();
@@ -2410,5 +2461,7 @@ function initSimulatedWidgets() {
     initNuclearReactor();
     initInterpolDatabase();
     initRemoteTunnel();
+    initHudCodeStream();
+    initHudBpm();
 }
 
