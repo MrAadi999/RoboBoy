@@ -1038,6 +1038,27 @@ function speakText(text) {
     utterance.pitch = pitchEl ? parseFloat(pitchEl.value) : 1.05;
     utterance.volume = volumeEl ? parseFloat(volumeEl.value) / 100 : 1.0;
     
+    // Center Screen Cyber Face Lip-Sync & Speech Banner Trigger
+    const hudSpeechText = document.getElementById('hudSpeechText');
+    const hudSpeechBanner = document.getElementById('hudSpeechBanner');
+    const cyberFaceHologram = document.getElementById('cyberFaceHologram');
+    const cyberMouthEqualizer = document.getElementById('cyberMouthEqualizer');
+
+    if (hudSpeechText) hudSpeechText.innerText = spokenText;
+    if (hudSpeechBanner) hudSpeechBanner.classList.add('speaking');
+    if (cyberFaceHologram) cyberFaceHologram.classList.add('speaking');
+    if (cyberMouthEqualizer) cyberMouthEqualizer.classList.add('speaking');
+
+    const resetLipSync = () => {
+        if (hudSpeechBanner) hudSpeechBanner.classList.remove('speaking');
+        if (cyberFaceHologram) cyberFaceHologram.classList.remove('speaking');
+        if (cyberMouthEqualizer) cyberMouthEqualizer.classList.remove('speaking');
+        if (hudSpeechText) hudSpeechText.innerText = "SYSTEM READY. AWAITING COMMAND.";
+    };
+
+    utterance.onend = resetLipSync;
+    utterance.onerror = resetLipSync;
+    
     synth.speak(utterance);
 }
 

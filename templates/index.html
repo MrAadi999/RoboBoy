@@ -39,6 +39,73 @@
                 </div>
             </div>
 
+            <!-- CENTER SCREEN 3D CYBER AI FACE (LIP-SYNC & VOICE ASSISTANT) -->
+            <div class="hud-center-face-container" id="hudCenterFaceContainer">
+                <div class="cyber-face-hologram" id="cyberFaceHologram">
+                    <div class="face-orbit-ring ring-1"></div>
+                    <div class="face-orbit-ring ring-2"></div>
+                    <div class="face-avatar-img">
+                        <img src="/static/images/lina.png" id="cyberFaceImg" alt="AI Assistant Cyber Face">
+                        <div class="cyber-face-overlay-grid"></div>
+                    </div>
+                    <!-- Audio Equalizer / Lip-Sync Mouth Bars -->
+                    <div class="cyber-mouth-equalizer" id="cyberMouthEqualizer">
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                    </div>
+                </div>
+                <!-- Real-time Spoken Text HUD Banner -->
+                <div class="hud-speech-banner" id="hudSpeechBanner">
+                    <span class="speech-tag">AI VOICE // LINA:</span>
+                    <span class="speech-text" id="hudSpeechText">SYSTEM READY. AWAITING COMMAND.</span>
+                </div>
+            </div>
+
+            <!-- TOP RIGHT 3D HUMAN BODY SCANNER HUD WIDGET -->
+            <div class="hud-body-scanner-box">
+                <div class="hud-scanner-title">HUMAN ANATOMY // 3D BODY SCANNER</div>
+                <div class="hud-body-graphic">
+                    <div class="body-laser-scan"></div>
+                    <!-- 3D Male Human Hologram Silhouette SVG -->
+                    <svg viewBox="0 0 100 200" class="human-wireframe-svg">
+                        <!-- Head -->
+                        <circle cx="50" cy="25" r="12" fill="none" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="2 1" />
+                        <circle cx="50" cy="25" r="4" fill="#33ff33" />
+                        <!-- Neck -->
+                        <line x1="50" y1="37" x2="50" y2="45" stroke="#33ff33" stroke-width="2" />
+                        <!-- Torso / Chest -->
+                        <path d="M 35 45 L 65 45 L 58 110 L 42 110 Z" fill="none" stroke="#00f0ff" stroke-width="1.5" />
+                        <line x1="35" y1="45" x2="65" y2="45" stroke="#33ff33" stroke-width="2" />
+                        <!-- Spine & Ribs -->
+                        <line x1="50" y1="45" x2="50" y2="110" stroke="#33ff33" stroke-width="1" stroke-dasharray="2 2" />
+                        <line x1="42" y1="60" x2="58" y2="60" stroke="#00f0ff" stroke-width="1" />
+                        <line x1="44" y1="75" x2="56" y2="75" stroke="#00f0ff" stroke-width="1" />
+                        <!-- Left Arm -->
+                        <path d="M 35 45 L 20 80 L 15 115" fill="none" stroke="#33ff33" stroke-width="1.5" />
+                        <!-- Right Arm -->
+                        <path d="M 65 45 L 80 80 L 85 115" fill="none" stroke="#33ff33" stroke-width="1.5" />
+                        <!-- Left Leg -->
+                        <path d="M 43 110 L 38 155 L 36 190" fill="none" stroke="#00f0ff" stroke-width="1.5" />
+                        <!-- Right Leg -->
+                        <path d="M 57 110 L 62 155 L 64 190" fill="none" stroke="#00f0ff" stroke-width="1.5" />
+                        <!-- Target reticles -->
+                        <circle cx="50" cy="25" r="3" fill="#ff3333" />
+                        <circle cx="50" cy="60" r="3" fill="#33ff33" />
+                        <circle cx="50" cy="110" r="3" fill="#00f0ff" />
+                    </svg>
+                </div>
+                <div class="hud-body-metrics">
+                    <div>ANATOMY: <span class="metric-val">100% SCANNED</span></div>
+                    <div>HEIGHT: <span class="metric-val">182 CM</span></div>
+                    <div>STATUS: <span class="metric-val green">BIO MATCHED</span></div>
+                </div>
+            </div>
+
             <!-- Upward Line-Numbered Code Column (Left overlay) -->
             <div class="hud-left-codestream" id="hudLeftCodeStream"></div>
 

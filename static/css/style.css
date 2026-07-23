@@ -1699,3 +1699,263 @@ body::after {
     color: var(--neon-green);
     letter-spacing: 0.5px;
 }
+
+/* ==========================================================================
+   CENTER SCREEN 3D CYBER AI FACE (LIP-SYNC & VOICE ASSISTANT)
+   ========================================================================== */
+.hud-center-face-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -52%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.cyber-face-hologram {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    filter: drop-shadow(0 0 12px rgba(51, 255, 51, 0.4));
+}
+
+.cyber-face-hologram.speaking {
+    filter: drop-shadow(0 0 25px rgba(0, 240, 255, 0.85)) drop-shadow(0 0 35px rgba(51, 255, 51, 0.6));
+    animation: facePulse 0.4s infinite alternate ease-in-out;
+}
+
+@keyframes facePulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.06); }
+}
+
+.face-avatar-img {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    background: #000;
+}
+
+.face-avatar-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: screen;
+}
+
+.cyber-face-overlay-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 240, 255, 0.15),
+        rgba(0, 240, 255, 0.15) 1px,
+        transparent 1px,
+        transparent 4px
+    );
+    pointer-events: none;
+}
+
+.face-orbit-ring {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.ring-1 {
+    width: 150px;
+    height: 150px;
+    border: 1px dashed rgba(51, 255, 51, 0.4);
+    animation: orbitRotate 12s infinite linear;
+}
+
+.ring-2 {
+    width: 170px;
+    height: 170px;
+    border: 1px dotted rgba(0, 240, 255, 0.5);
+    animation: orbitRotateRev 18s infinite linear;
+}
+
+@keyframes orbitRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes orbitRotateRev {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* Audio Equalizer Mouth Lip-Sync Bars */
+.cyber-mouth-equalizer {
+    position: absolute;
+    bottom: 5px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 20px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    border: 1px solid var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green-glow);
+}
+
+.eq-bar {
+    width: 4px;
+    height: 4px;
+    background: var(--neon-green);
+    border-radius: 2px;
+    transition: height 0.1s ease;
+}
+
+.cyber-mouth-equalizer.speaking .eq-bar {
+    background: var(--neon-cyan);
+    box-shadow: 0 0 6px var(--neon-cyan);
+    animation: eqBounce 0.25s infinite alternate ease-in-out;
+}
+
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(1) { animation-delay: 0.05s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(2) { animation-delay: 0.12s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(3) { animation-delay: 0.08s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(4) { animation-delay: 0.20s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(5) { animation-delay: 0.15s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(6) { animation-delay: 0.07s; }
+.cyber-mouth-equalizer.speaking .eq-bar:nth-child(7) { animation-delay: 0.18s; }
+
+@keyframes eqBounce {
+    0% { height: 3px; }
+    100% { height: 18px; }
+}
+
+/* Real-time Spoken Text Speech Banner */
+.hud-speech-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(0, 15, 8, 0.85);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    max-width: 420px;
+    text-align: center;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.hud-speech-banner.speaking {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 20px rgba(51, 255, 51, 0.4);
+}
+
+.speech-tag {
+    color: var(--neon-cyan);
+    font-weight: bold;
+}
+
+.speech-text {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   TOP RIGHT 3D HUMAN BODY SCANNER HUD WIDGET
+   ========================================================================== */
+.hud-body-scanner-box {
+    position: absolute;
+    top: 45px;
+    right: 15px;
+    width: 200px;
+    padding: 8px;
+    background: rgba(0, 10, 5, 0.75);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.75;
+    transition: opacity 0.3s ease;
+}
+
+.hud-body-scanner-box:hover {
+    opacity: 1;
+}
+
+.hud-scanner-title {
+    font-size: 9px;
+    color: var(--neon-cyan);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.hud-body-graphic {
+    position: relative;
+    width: 90px;
+    height: 120px;
+    border: 1px dashed rgba(51, 255, 51, 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.human-wireframe-svg {
+    width: 75px;
+    height: 110px;
+}
+
+.body-laser-scan {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #33ff33;
+    box-shadow: 0 0 12px #33ff33;
+    animation: bodyScan 2.5s infinite ease-in-out;
+}
+
+@keyframes bodyScan {
+    0% { top: 0%; opacity: 0.3; }
+    50% { top: 100%; opacity: 1; }
+    100% { top: 0%; opacity: 0.3; }
+}
+
+.hud-body-metrics {
+    font-size: 8.5px;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+}
+
+.metric-val {
+    color: var(--neon-cyan);
+    font-weight: bold;
+}
+.metric-val.green {
+    color: var(--neon-green);
+}
