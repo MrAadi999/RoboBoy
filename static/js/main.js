@@ -2474,6 +2474,23 @@ function initHudBpm() {
     }, 1500);
 }
 
+function initCpuMonitor() {
+    const cpuEl = document.getElementById('hudCpuPercent');
+    const cpuBarsContainer = document.getElementById('hudCpuBars');
+    if (!cpuEl || !cpuBarsContainer) return;
+    
+    setInterval(() => {
+        const val = 65 + Math.floor(Math.random() * 25);
+        cpuEl.innerText = val + '%';
+        
+        const bars = cpuBarsContainer.querySelectorAll('.cpu-bar');
+        bars.forEach(bar => {
+            const h = 40 + Math.floor(Math.random() * 55);
+            bar.style.height = h + '%';
+        });
+    }, 1200);
+}
+
 // Global simulated loops registry initializer
 function initSimulatedWidgets() {
     initCCTVFeeds();
@@ -2484,5 +2501,6 @@ function initSimulatedWidgets() {
     initRemoteTunnel();
     initHudCodeStream();
     initHudBpm();
+    initCpuMonitor();
 }
 
