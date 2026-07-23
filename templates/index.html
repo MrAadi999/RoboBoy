@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=14.0">
 </head>
 <body class="hacker-desktop">
     <!-- Matrix Rain canvas background -->
@@ -22,129 +22,105 @@
     <!-- DESKTOP CONTAINER -->
     <div class="desktop" id="desktop">
         
-        <!-- HUD Sci-Fi Cyber Overlay (Pinterest Hacker Screen Style) -->
+        <!-- HUD Sci-Fi Cyber Overlay (Exact Mockup 2: Emerald Matrix & Crimson Cyber Threat Radar) -->
         <div class="cyber-hud-overlay" id="cyberHudOverlay">
-            <!-- Top HUD Bar -->
-            <div class="hud-top-bar">
-                <div class="hud-left-info">
-                    <span class="hud-code-tag">0147 - INF . 0215'</span>
-                    <span class="hud-tab active">BIO DIAGNOSTIC</span>
-                    <span class="hud-tab">SEARCH</span>
-                    <span class="hud-tab">OPERATION</span>
-                    <span class="hud-tab">SECURITY</span>
-                </div>
-                <div class="hud-right-info">
-                    <span class="bpm-pulse">🔥 HEART RATE: <strong id="hudBpm">160</strong> BPM</span>
-                    <span class="hud-status-badge">TARGET LOCKED</span>
-                </div>
+            
+            <!-- Far Left Vertical Katakana Stream -->
+            <div class="vertical-katakana-stream" id="verticalKatakanaStream">
+                ネターのチセンジ アツワ サフテス センジ コリ138500201 テキスク ウーマ クノクーシ17
             </div>
 
-            <!-- CENTER SCREEN 3D CYBER AI FACE (LIP-SYNC & VOICE ASSISTANT) -->
-            <div class="hud-center-face-container" id="hudCenterFaceContainer">
-                <div class="cyber-face-hologram" id="cyberFaceHologram">
-                    <div class="face-orbit-ring ring-1"></div>
-                    <div class="face-orbit-ring ring-2"></div>
-                    <div class="face-avatar-img">
-                        <img src="/static/images/lina.png" id="cyberFaceImg" alt="AI Assistant Cyber Face">
-                        <div class="cyber-face-overlay-grid"></div>
+            <!-- Main Screen Grid matching Mockup 2 -->
+            <div class="mockup2-main-grid">
+                
+                <!-- TOP LEFT / CENTER: Huge 3D Globe Radar -->
+                <div class="hud-box globe-section-box">
+                    <!-- Left Connecter Telemetry Box -->
+                    <div class="connecter-side-info">
+                        <div class="box-hdr">Connecter</div>
+                        <div class="box-sub">Deva 600v00...</div>
+                        <div class="box-bar-track"><div class="box-bar-fill"></div></div>
+                        <div class="box-lbl">Connection Status</div>
+                        <canvas id="globeConnGraph" width="100" height="30"></canvas>
                     </div>
-                    <!-- Audio Equalizer / Lip-Sync Mouth Bars -->
-                    <div class="cyber-mouth-equalizer" id="cyberMouthEqualizer">
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                        <span class="eq-bar"></span>
-                    </div>
-                </div>
-                <!-- Real-time Spoken Text HUD Banner -->
-                <div class="hud-speech-banner" id="hudSpeechBanner">
-                    <span class="speech-tag">AI VOICE // LINA:</span>
-                    <span class="speech-text" id="hudSpeechText">SYSTEM READY. AWAITING COMMAND.</span>
-                </div>
-            </div>
 
-            <!-- TOP RIGHT 3D HUMAN BODY SCANNER HUD WIDGET -->
-            <div class="hud-body-scanner-box">
-                <div class="hud-scanner-title">HUMAN ANATOMY // 3D BODY SCANNER</div>
-                <div class="hud-body-graphic">
-                    <div class="body-laser-scan"></div>
-                    <!-- 3D Male Human Hologram Silhouette SVG -->
-                    <svg viewBox="0 0 100 200" class="human-wireframe-svg">
-                        <!-- Head -->
-                        <circle cx="50" cy="25" r="12" fill="none" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="2 1" />
-                        <circle cx="50" cy="25" r="4" fill="#33ff33" />
-                        <!-- Neck -->
-                        <line x1="50" y1="37" x2="50" y2="45" stroke="#33ff33" stroke-width="2" />
-                        <!-- Torso / Chest -->
-                        <path d="M 35 45 L 65 45 L 58 110 L 42 110 Z" fill="none" stroke="#00f0ff" stroke-width="1.5" />
-                        <line x1="35" y1="45" x2="65" y2="45" stroke="#33ff33" stroke-width="2" />
-                        <!-- Spine & Ribs -->
-                        <line x1="50" y1="45" x2="50" y2="110" stroke="#33ff33" stroke-width="1" stroke-dasharray="2 2" />
-                        <line x1="42" y1="60" x2="58" y2="60" stroke="#00f0ff" stroke-width="1" />
-                        <line x1="44" y1="75" x2="56" y2="75" stroke="#00f0ff" stroke-width="1" />
-                        <!-- Left Arm -->
-                        <path d="M 35 45 L 20 80 L 15 115" fill="none" stroke="#33ff33" stroke-width="1.5" />
-                        <!-- Right Arm -->
-                        <path d="M 65 45 L 80 80 L 85 115" fill="none" stroke="#33ff33" stroke-width="1.5" />
-                        <!-- Left Leg -->
-                        <path d="M 43 110 L 38 155 L 36 190" fill="none" stroke="#00f0ff" stroke-width="1.5" />
-                        <!-- Right Leg -->
-                        <path d="M 57 110 L 62 155 L 64 190" fill="none" stroke="#00f0ff" stroke-width="1.5" />
-                        <!-- Target reticles -->
-                        <circle cx="50" cy="25" r="3" fill="#ff3333" />
-                        <circle cx="50" cy="60" r="3" fill="#33ff33" />
-                        <circle cx="50" cy="110" r="3" fill="#00f0ff" />
-                    </svg>
+                    <!-- Center 3D Globe Radar Canvas -->
+                    <div class="globe-canvas-container">
+                        <div class="deg-tag deg-top">90°</div>
+                        <div class="deg-tag deg-left">230° / 180°</div>
+                        <div class="deg-tag deg-right">30° / 0°</div>
+                        <div class="deg-tag deg-bottom">270°</div>
+                        <canvas id="option2GlobeCanvas" width="550" height="320"></canvas>
+                    </div>
                 </div>
-                <div class="hud-body-metrics">
-                    <div>ANATOMY: <span class="metric-val">100% SCANNED</span></div>
-                    <div>HEIGHT: <span class="metric-val">182 CM</span></div>
-                    <div>STATUS: <span class="metric-val green">BIO MATCHED</span></div>
-                </div>
-            </div>
 
-            <!-- BOTTOM SCI-FI SYSTEM DIAGNOSTICS & AUDIO DOCK (Mockup Match) -->
-            <div class="hud-bottom-dashboard">
-                <div class="hud-dash-card">
-                    <div class="dash-title">NET_STATUS</div>
-                    <div class="dash-val green">NET_STATUS: SECURE</div>
-                    <div class="dash-sub">FIREWALL: ACTIVE | VPN: ENCRYPTED</div>
-                </div>
-                <div class="hud-dash-card">
-                    <div class="dash-title">CPU_USAGE</div>
-                    <div class="dash-val" id="hudCpuPercent">74%</div>
-                    <div class="dash-bars" id="hudCpuBars">
-                        <span class="cpu-bar" style="height: 60%;"></span>
-                        <span class="cpu-bar" style="height: 80%;"></span>
-                        <span class="cpu-bar" style="height: 45%;"></span>
-                        <span class="cpu-bar" style="height: 90%;"></span>
-                        <span class="cpu-bar" style="height: 70%;"></span>
-                        <span class="cpu-bar" style="height: 85%;"></span>
+                <!-- TOP RIGHT: Sound Equalizers (sound equalizer, sound, noise) -->
+                <div class="hud-box sound-eq-section-box">
+                    <div class="eq-block">
+                        <div class="eq-title">sound equalizer</div>
+                        <div class="eq-grid-bars" id="eqBarsGroup1"></div>
+                    </div>
+                    <div class="eq-block">
+                        <div class="eq-title">sound</div>
+                        <div class="eq-grid-bars" id="eqBarsGroup2"></div>
+                    </div>
+                    <div class="eq-block">
+                        <div class="eq-title">noise</div>
+                        <div class="eq-grid-bars" id="eqBarsGroup3"></div>
                     </div>
                 </div>
-                <div class="hud-dash-card">
-                    <div class="dash-title">RAM_ALLOCATION</div>
-                    <div class="dash-val">11.2GB / 16GB</div>
-                    <div class="ram-track"><div class="ram-fill" style="width: 70%;"></div></div>
-                </div>
-                <div class="hud-dash-card flex-grow">
-                    <div class="dash-title">SOUND_WAVE_VISUALIZER</div>
-                    <div class="audio-wave-visualizer" id="hudAudioWaveVisualizer">
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+
+                <!-- BOTTOM LEFT: SYSTEM INTEGRITY (Red Warning Icons & Graphs) -->
+                <div class="hud-box system-integrity-box">
+                    <div class="integrity-hdr text-red">SYSTEM INTEGRITY</div>
+                    <div class="warning-icons-grid">
+                        <div class="warn-card"><span class="warn-icon">⚠️</span></div>
+                        <div class="warn-card"><span class="warn-icon">⚠️</span></div>
+                        <div class="warn-card"><span class="warn-icon">⚠️</span></div>
+                        <div class="warn-card"><span class="warn-icon">⚠️</span></div>
+                    </div>
+                    <div class="integrity-graphs">
+                        <div class="ig-lbl">Connection</div>
+                        <canvas id="sparkGraph1" width="220" height="35"></canvas>
+                        <div class="ig-lbl">Connection</div>
+                        <canvas id="sparkGraph2" width="220" height="35"></canvas>
                     </div>
                 </div>
-                <div class="hud-dash-card">
-                    <div class="dash-title">DISK_I/O</div>
-                    <div class="dash-val green">98 MB/s</div>
-                    <div class="dash-sub">READ: 64MB | WRITE: 34MB</div>
+
+                <!-- BOTTOM CENTER: Root Hacker Terminal CLI Window (root@shadow_net:~$) -->
+                <div class="hud-box terminal-cli-box">
+                    <div class="cli-window-header">
+                        <span class="cli-title">root@shadow_net:~$</span>
+                        <div class="cli-win-btns">
+                            <span>_</span><span>☐</span><span onclick="openWindow('win-terminal')" style="cursor:pointer;">✕</span>
+                        </div>
+                    </div>
+                    <div class="cli-terminal-body" id="embeddedTermOutput">
+                        <div class="t-row"><span class="t-green">root@shadow_net:~$</span> cno-m root</div>
+                        <div class="t-row">Existing system found for connectors...</div>
+                        <div class="t-row">Operating backends...</div>
+                        <div class="t-row">Checking character sources...</div>
+                        <div class="t-row">Checking communication...</div>
+                        <div class="t-row">Existing matrosses-occurrent-neaountex3629c79956b:aseccic.crl</div>
+                        <div class="t-row">Eneching coliowket-service [eaneiontex3629c79956b:aseceral9]</div>
+                        <div class="t-row t-red">Failed connection attempt: rootlitechanne-attopt [cr0:192:15:15:sc126]</div>
+                        <div class="t-row t-red">Failed connection attempt: rootlechanne-attopt [cr0:0775:16:51:36]</div>
+                        <div class="t-row t-red">Failed connection attempt: rootlitechanne-attopt [cr0:192:16:343:3:44]</div>
+                        <div class="t-row t-green">Cracking in c:\shadow_ncsa7</div>
+                        <div class="t-row t-green">Checking status: Connects and get in a sokute</div>
+                        <div class="t-row t-green">Checking status: Connects and in connects as welt</div>
+                        <div class="t-row t-green">Pulse: now at http://shadow_oyberd_now_net:/</div>
+                    </div>
                 </div>
+
+                <!-- BOTTOM RIGHT: Cyber Attack Live Map -->
+                <div class="hud-box cyber-map-box">
+                    <div class="map-hdr">cyber attack live map</div>
+                    <div class="map-canvas-container">
+                        <canvas id="option2AttackMapCanvas" width="420" height="240"></canvas>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -211,7 +187,7 @@
              ======================================================== -->
 
         <!-- 1. TERMINAL WINDOW -->
-        <div class="window" id="win-terminal" style="top: 50px; left: 300px; width: 680px; height: 420px; z-index: 10;">
+        <div class="window hidden" id="win-terminal" style="top: 50px; left: 300px; width: 680px; height: 420px; z-index: 10;">
             <div class="window-header" onmousedown="dragStart(event, 'win-terminal')">
                 <span class="window-title"><span class="win-hdr-icon">💻</span> Terminal Console</span>
                 <div class="window-controls">
@@ -240,7 +216,7 @@
         </div>
 
         <!-- 2. ROBOBOY AI ASSISTANT CHAT WINDOW -->
-        <div class="window" id="win-chatbot" style="top: 80px; left: 100px; width: 750px; height: 500px; z-index: 5;">
+        <div class="window hidden" id="win-chatbot" style="top: 80px; left: 100px; width: 750px; height: 500px; z-index: 5;">
             <div class="window-header" onmousedown="dragStart(event, 'win-chatbot')">
                 <span class="window-title"><span class="win-hdr-icon">🤖</span> RoboBoy AI Voice Assistant</span>
                 <div class="window-controls">
@@ -888,6 +864,6 @@
     </div>
 
     <!-- JavaScript script references -->
-    <script src="/static/js/main.js"></script>
+    <script src="/static/js/main.js?v=14.0"></script>
 </body>
 </html>

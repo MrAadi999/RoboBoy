@@ -1,0 +1,6 @@
+# RoboBoy Project Rules
+
+- The main user interface of this project is the Flask web server in `app.py` (which runs on port 5001).
+- The hacker simulator/pranx.com-style UI is rendered from `templates/index.html` and styled via `static/css/style.css` and `static/css/hacker_desktop.css`.
+- The `frontend` (Flutter app) and `backend` (FastAPI app) folders are part of a separate phase and should NOT be run or targeted unless the user explicitly requests it.
+- To run the application/localhost, always execute `python3 app.py` from the root directory.

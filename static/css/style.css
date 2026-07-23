@@ -102,7 +102,7 @@ body::after {
     width: 100%;
     height: 100%;
     z-index: 0;
-    opacity: 0.22;
+    opacity: 0.65;
     pointer-events: none;
 }
 
@@ -119,14 +119,16 @@ body::after {
 }
 
 .desktop-grid {
-    display: grid;
-    grid-template-rows: repeat(auto-fill, 90px);
-    grid-auto-flow: column;
-    grid-auto-columns: 100px;
-    gap: 15px;
-    padding: 20px;
-    height: calc(100vh - 45px);
-    width: fit-content;
+    position: relative;
+    z-index: 20;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 8px;
+    height: calc(100vh - 50px);
+    width: 115px;
+    overflow-y: auto;
 }
 
 .desktop-icon {
@@ -136,32 +138,38 @@ body::after {
     justify-content: center;
     cursor: pointer;
     text-align: center;
-    padding: 6px;
-    border-radius: 4px;
+    padding: 8px;
+    border-radius: 6px;
     border: 1px solid transparent;
     transition: var(--transition-smooth);
 }
 
 .desktop-icon:hover {
-    background: rgba(51, 255, 51, 0.08);
-    border-color: rgba(51, 255, 51, 0.25);
-    box-shadow: var(--shadow-neon);
+    background: rgba(51, 255, 51, 0.12);
+    border-color: rgba(51, 255, 51, 0.4);
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
 }
 
 .desktop-icon .icon-graphic {
-    font-size: 26px;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 0 4px var(--neon-green));
+    font-size: 30px;
+    margin-bottom: 2px;
+    filter: drop-shadow(0 0 6px var(--neon-green));
+    transition: transform 0.2s ease;
+}
+
+.desktop-icon:hover .icon-graphic {
+    transform: scale(1.15);
 }
 
 .desktop-icon .icon-label {
     font-size: 11px;
+    font-weight: bold;
     color: var(--text-primary);
-    text-shadow: 0 0 5px var(--neon-green-glow);
+    text-shadow: 0 0 6px var(--neon-green-glow);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 90px;
+    width: 105px;
 }
 
 /* ==========================================================================
@@ -1508,7 +1516,7 @@ body::after {
 }
 
 /* ==========================================================================
-   CYBER HUD OVERLAY (PINTEREST HACKER SCREEN STYLE)
+   CYBER HUD OVERLAY (BENTO GRID HACKER COMMAND CENTER)
    ========================================================================== */
 .cyber-hud-overlay {
     position: absolute;
@@ -1520,78 +1528,508 @@ body::after {
     z-index: 1;
     overflow: hidden;
     font-family: var(--font-mono);
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .hud-top-bar {
-    position: absolute;
-    top: 6px;
-    left: 10px;
-    right: 10px;
+    position: relative;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 12px;
-    background: rgba(0, 15, 5, 0.65);
-    border: 1px solid rgba(51, 255, 51, 0.3);
-    border-radius: 4px;
-    backdrop-filter: blur(4px);
+    padding: 6px 16px;
+    background: rgba(6, 12, 22, 0.75);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
     font-size: 11px;
-    color: var(--neon-green);
-    text-shadow: 0 0 5px var(--neon-green-glow);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
+    pointer-events: auto;
 }
 
 .hud-left-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .hud-code-tag {
     color: var(--neon-cyan);
     font-weight: bold;
     letter-spacing: 1px;
+    text-shadow: 0 0 8px var(--neon-cyan-glow);
 }
 
 .hud-tab {
-    padding: 2px 8px;
-    border: 1px solid rgba(0, 240, 255, 0.2);
-    border-radius: 2px;
-    color: rgba(255, 255, 255, 0.7);
+    padding: 3px 10px;
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.75);
     font-size: 10px;
     letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.hud-tab.active {
-    background: rgba(0, 240, 255, 0.15);
+.hud-tab:hover, .hud-tab.active {
+    background: rgba(0, 240, 255, 0.2);
     border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
-    box-shadow: 0 0 8px var(--neon-cyan-glow);
+    color: #fff;
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
 }
 
 .hud-right-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .bpm-pulse {
-    color: #ff3333;
-    animation: bpmPulse 1.2s infinite ease-in-out;
-}
-
-@keyframes bpmPulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.03); }
-}
-
-.hud-status-badge {
-    background: rgba(51, 255, 51, 0.15);
-    border: 1px solid var(--neon-green);
-    padding: 2px 6px;
-    border-radius: 2px;
     color: var(--neon-green);
+    font-weight: 500;
+}
+
+.glowing-badge {
+    background: rgba(0, 243, 255, 0.12);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    padding: 2px 8px;
+    border-radius: 3px;
     font-size: 10px;
     font-weight: bold;
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+}
+
+.alert-badge {
+    background: rgba(255, 51, 51, 0.15);
+    border: 1px solid var(--neon-red);
+    color: var(--neon-red);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   OPTION 2: EXACT MOCKUP 2 HACKER SCREEN STYLING (hacker_ui_mockup2)
+   ========================================================================== */
+
+/* Far Left Vertical Katakana Text Stream */
+.vertical-katakana-stream {
+    position: absolute;
+    left: 10px;
+    top: 20px;
+    bottom: 50px;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    color: #00ff66;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.8);
+    opacity: 0.85;
+    line-height: 1.6;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* Mockup 2 Main 2-Row Grid Layout (Acting as Living Background Wallpaper) */
+.mockup2-main-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr 340px;
+    grid-template-rows: 1fr 220px;
+    gap: 14px;
+    margin-left: 145px; /* clearance for larger desktop icons on top */
+    margin-right: 15px;
+    margin-top: 15px;
+    margin-bottom: 50px; /* clearance for taskbar */
+    height: calc(100vh - 75px);
+    pointer-events: none;
+}
+
+.hud-box {
+    background: rgba(0, 6, 2, 0.85);
+    border: 1px solid #00ff66;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+/* Top Left/Center: 3D Globe Radar Box */
+.globe-section-box {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.connecter-side-info {
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    font-size: 10px;
+    color: #00ff66;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 5;
+    background: rgba(0, 15, 3, 0.8);
+    padding: 8px;
+    border: 1px solid rgba(0, 255, 102, 0.4);
+    border-radius: 3px;
+    font-family: var(--font-mono);
+}
+
+.box-hdr { font-weight: bold; }
+.box-sub { font-size: 9px; color: rgba(255, 255, 255, 0.7); }
+.box-bar-track { width: 90px; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
+.box-bar-fill { width: 75%; height: 100%; background: #00ff66; }
+.box-lbl { font-size: 9px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; }
+
+.globe-canvas-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#option2GlobeCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.deg-tag {
+    position: absolute;
+    color: #ff3333;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    text-shadow: 0 0 6px rgba(255, 51, 51, 0.8);
+    z-index: 5;
+}
+
+.deg-top { top: 12px; left: 50%; transform: translateX(-50%); }
+.deg-left { left: 140px; top: 50%; transform: translateY(-50%); }
+.deg-right { right: 20px; top: 50%; transform: translateY(-50%); }
+.deg-bottom { bottom: 12px; left: 50%; transform: translateX(-50%); }
+
+/* Top Right: Sound Equalizers Box */
+.sound-eq-section-box {
+    grid-column: 3;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    background: #000;
+}
+
+.eq-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.eq-title {
+    font-size: 10px;
+    color: #00ff66;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(0, 255, 102, 0.3);
+    padding-bottom: 2px;
+    font-family: var(--font-mono);
+}
+
+.eq-grid-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 52px;
+    background: #000;
+    padding: 3px;
+    border: 1px solid rgba(0, 255, 102, 0.3);
+    border-radius: 2px;
+}
+
+.eq-bar-col {
+    flex: 1;
+    background: linear-gradient(to top, #00ff66 0%, #ffb000 65%, #ff3333 100%);
+    border-radius: 1px;
+    transition: height 0.1s ease;
+}
+
+/* Bottom Left: System Integrity Box */
+.system-integrity-box {
+    grid-column: 1;
+    grid-row: 2;
+    background: #000;
+}
+
+.integrity-hdr {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 51, 51, 0.3);
+    padding-bottom: 2px;
+    font-family: var(--font-mono);
+}
+
+.warning-icons-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin: 6px 0;
+}
+
+.warn-card {
+    background: rgba(255, 51, 51, 0.2);
+    border: 1px solid #ff3333;
+    text-align: center;
+    padding: 4px 0;
+    border-radius: 3px;
+    animation: blinkWarning 1s infinite alternate;
+}
+
+.warn-icon {
+    font-size: 14px;
+}
+
+@keyframes blinkWarning {
+    0% { opacity: 1; box-shadow: 0 0 10px rgba(255, 51, 51, 0.8); }
+    100% { opacity: 0.3; box-shadow: none; }
+}
+
+.integrity-graphs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ig-lbl {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-mono);
+}
+
+/* Bottom Center: Root Hacker Terminal CLI Box */
+.terminal-cli-box {
+    grid-column: 2;
+    grid-row: 2;
+    background: #000;
+    border: 1px solid #00ff66;
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+}
+
+.cli-window-header {
+    background: rgba(0, 30, 10, 0.9);
+    border-bottom: 1px solid #00ff66;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #00ff66;
+    font-weight: bold;
+    font-family: var(--font-mono);
+}
+
+.cli-win-btns {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.cli-terminal-body {
+    padding: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #00ff66;
+    overflow-y: auto;
+    flex: 1;
+    line-height: 1.45;
+}
+
+.t-row {
+    word-break: break-all;
+}
+
+.t-red {
+    color: #ff3333 !important;
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(255, 51, 51, 0.6);
+}
+
+.t-green {
+    color: #00ff66 !important;
+}
+
+/* Bottom Right: Cyber Attack Live Map Box */
+.cyber-map-box {
+    grid-column: 3;
+    grid-row: 2;
+    background: #000;
+}
+
+.map-hdr {
+    font-size: 10px;
+    color: #00ff66;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(0, 255, 102, 0.3);
+    padding-bottom: 4px;
+    letter-spacing: 1px;
+    font-family: var(--font-mono);
+}
+
+.map-canvas-container {
+    flex: 1;
+    background: #000;
+    border: 1px solid rgba(0, 255, 102, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.hologram-avatar-overlay {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 25px var(--neon-cyan-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.hologram-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hologram-scan-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px dashed var(--neon-cyan);
+    animation: rotateScanRing 10s linear infinite;
+}
+
+@keyframes rotateScanRing {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.hud-speech-banner {
+    width: 100%;
+    background: rgba(0, 243, 255, 0.1);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+}
+
+.speech-tag {
+    color: var(--neon-cyan);
+    font-weight: bold;
+}
+
+.speech-text {
+    color: #fff;
+}
+
+/* Card 3: Cyber Threat Map */
+.attack-map-card {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.threat-map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#cyberThreatMapCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.threat-logs-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.threat-log-item {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.log-time { color: rgba(255, 255, 255, 0.4); }
+.tag-red { color: var(--neon-red); }
+.tag-cyan { color: var(--neon-cyan); }
+
+/* Card 4: Audio Visualizer & Network */
+.audio-telemetry-card {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.audio-equalizer-grid {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 50px;
+    padding: 6px 0;
+}
+
+.eq-column {
+    width: 8%;
+    background: linear-gradient(to top, var(--neon-green), var(--neon-cyan));
+    border-radius: 2px;
+    box-shadow: 0 0 6px var(--neon-green-glow);
+    transition: height 0.1s ease;
+}
+
+.net-stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 6px;
 }
 
 /* Upward Line-Numbered Code Column (Left Side) */

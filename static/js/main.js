@@ -1426,17 +1426,14 @@ let startWidth = 0;
 let startHeight = 0;
 let startMouseX = 0;
 let startMouseY = 0;
-let zIndexCounter = 100;
+let zIndexCounter = 2000;
 
 function initWindowManager() {
     const windows = document.querySelectorAll('.window');
     windows.forEach(win => {
-        // Hide all windows by default, except chatbot and terminal
-        if (win.id !== 'win-chatbot' && win.id !== 'win-terminal') {
-            win.style.display = 'none';
-        } else {
-            win.style.display = 'flex';
-        }
+        // Hide all windows by default so background HUD wallpaper is clean
+        win.style.display = 'none';
+        win.classList.remove('hidden');
     });
     updateTaskbarPills();
 }
@@ -1517,10 +1514,15 @@ function openWindow(windowId) {
     const win = document.getElementById(windowId);
     if (!win) return;
     
+    win.classList.remove('hidden');
     win.classList.remove('minimized');
     win.style.display = 'flex';
+    if (zIndexCounter < 2000) zIndexCounter = 2000;
     bringToFront(win);
     updateTaskbarPills();
+    
+    const startMenu = document.getElementById('startMenu');
+    if (startMenu) startMenu.classList.add('hidden');
 }
 
 function closeWindow(windowId) {
@@ -1803,11 +1805,11 @@ function initMatrixRain() {
                     info.lineIdx = Math.floor(Math.random() * codeSnippets.length);
                     info.charOffset = 0;
                 }
-                upDrops[i] -= 0.75;
+                upDrops[i] -= 1.35;
             }
         }
     }
-    setInterval(draw, 33);
+    setInterval(draw, 16);
 }
 
 // ==========================================================================
@@ -2491,6 +2493,641 @@ function initCpuMonitor() {
     }, 1200);
 }
 
+// 3D Wireframe Cyber Globe Core Renderer
+function initHacker3dGlobe() {
+    const canvas = document.getElementById('hacker3dGlobeCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+        canvas.width = canvas.parentElement.clientWidth || 340;
+        canvas.height = canvas.parentElement.clientHeight || 240;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let angleY = 0;
+    let angleX = 0.3;
+    const radius = Math.min(canvas.width, canvas.height) * 0.35;
+
+    // Generate 3D nodes on sphere
+    const nodes = [];
+    const nodeCount = 35;
+    for (let i = 0; i < nodeCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        nodes.push({ theta, phi, pulse: Math.random() });
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        angleY += 0.008;
+
+        // Draw Latitudinal Rings
+        const latRings = 6;
+        for (let i = 1; i < latRings; i++) {
+            const latAngle = (Math.PI / latRings) * i - Math.PI / 2;
+            const ringRadius = radius * Math.cos(latAngle);
+            const ringY = radius * Math.sin(latAngle);
+
+            ctx.beginPath();
+            for (let a = 0; a <= Math.PI * 2; a += 0.1) {
+                const x = ringRadius * Math.sin(a);
+                const z = ringRadius * Math.cos(a);
+
+                // Rotate around X and Y
+                const rx = x * Math.cos(angleY) + z * Math.sin(angleY);
+                const rz = -x * Math.sin(angleY) + z * Math.cos(angleY);
+                const ry = ringY * Math.cos(angleX) - rz * Math.sin(angleX);
+
+                const projX = cx + rx;
+                const projY = cy + ry;
+
+                if (a === 0) ctx.moveTo(projX, projY);
+                else ctx.lineTo(projX, projY);
+            }
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Draw Nodes & Connecting Arcs
+        const projectedNodes = [];
+        nodes.forEach((n, idx) => {
+            const x = radius * Math.sin(n.phi) * Math.cos(n.theta);
+            const y = radius * Math.cos(n.phi);
+            const z = radius * Math.sin(n.phi) * Math.sin(n.theta);
+
+            // Rotate
+            const rx = x * Math.cos(angleY) + z * Math.sin(angleY);
+            const rz = -x * Math.sin(angleY) + z * Math.cos(angleY);
+            const ry = y * Math.cos(angleX) - rz * Math.sin(angleX);
+
+            const projX = cx + rx;
+            const projY = cy + ry;
+
+            projectedNodes.push({ x: projX, y: projY, z: rz });
+
+            // Draw Node
+            if (rz > -radius * 0.5) {
+                n.pulse = (n.pulse + 0.03) % 1;
+                const pSize = 2 + Math.sin(n.pulse * Math.PI) * 2;
+                ctx.beginPath();
+                ctx.arc(projX, projY, pSize, 0, Math.PI * 2);
+                ctx.fillStyle = idx % 3 === 0 ? '#33ff33' : '#00f3ff';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        });
+
+        // Draw random connection arcs between foreground nodes
+        for (let i = 0; i < projectedNodes.length; i++) {
+            for (let j = i + 1; j < projectedNodes.length; j++) {
+                const n1 = projectedNodes[i];
+                const n2 = projectedNodes[j];
+                if (n1.z > 0 && n2.z > 0) {
+                    const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+                    if (dist < 70) {
+                        ctx.beginPath();
+                        ctx.moveTo(n1.x, n1.y);
+                        ctx.lineTo(n2.x, n2.y);
+                        ctx.strokeStyle = `rgba(0, 243, 255, ${1 - dist / 70})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        requestAnimationFrame(render);
+    }
+    render();
+}
+
+// Global Cyber Threat Attack Map Renderer
+function initCyberThreatMap() {
+    const canvas = document.getElementById('cyberThreatMapCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+        canvas.width = canvas.parentElement.clientWidth || 340;
+        canvas.height = canvas.parentElement.clientHeight || 150;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // City coordinates normalized 0 to 1
+    const cities = [
+        { name: 'NYC', x: 0.28, y: 0.35 },
+        { name: 'London', x: 0.48, y: 0.28 },
+        { name: 'Frankfurt', x: 0.52, y: 0.30 },
+        { name: 'Tokyo', x: 0.85, y: 0.38 },
+        { name: 'Singapore', x: 0.78, y: 0.60 },
+        { name: 'Sydney', x: 0.90, y: 0.78 },
+        { name: 'Sao Paulo', x: 0.38, y: 0.70 }
+    ];
+
+    const attackArcs = [];
+    function spawnAttack() {
+        const from = cities[Math.floor(Math.random() * cities.length)];
+        let to = cities[Math.floor(Math.random() * cities.length)];
+        while (to === from) {
+            to = cities[Math.floor(Math.random() * cities.length)];
+        }
+        attackArcs.push({
+            from,
+            to,
+            progress: 0,
+            speed: 0.015 + Math.random() * 0.02,
+            color: Math.random() > 0.4 ? '#ff3333' : '#00f3ff'
+        });
+    }
+
+    setInterval(spawnAttack, 1200);
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Draw simplified grid backdrop
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
+        ctx.lineWidth = 0.5;
+        for (let x = 0; x < w; x += 20) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 20) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+        }
+
+        // Draw Cities
+        cities.forEach(c => {
+            const cx = c.x * w;
+            const cy = c.y * h;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#00f3ff';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.4)';
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.font = '8px monospace';
+            ctx.fillText(c.name, cx + 8, cy + 3);
+        });
+
+        // Draw and Update Attack Arcs
+        for (let i = attackArcs.length - 1; i >= 0; i--) {
+            const arc = attackArcs[i];
+            arc.progress += arc.speed;
+
+            const x1 = arc.from.x * w;
+            const y1 = arc.from.y * h;
+            const x2 = arc.to.x * w;
+            const y2 = arc.to.y * h;
+
+            // Control point for curved arc
+            const cx = (x1 + x2) / 2;
+            const cy = Math.min(y1, y2) - 30;
+
+            // Draw Arc line
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(cx, cy, x2, y2);
+            ctx.strokeStyle = arc.color === '#ff3333' ? 'rgba(255, 51, 51, 0.3)' : 'rgba(0, 243, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw traveling packet point
+            const t = arc.progress;
+            const px = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2;
+            const py = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2;
+
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fillStyle = arc.color;
+            ctx.shadowColor = arc.color;
+            ctx.shadowBlur = 6;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            if (arc.progress >= 1) {
+                attackArcs.splice(i, 1);
+            }
+        }
+
+        requestAnimationFrame(render);
+    }
+    render();
+}
+
+// ==========================================================================
+// OPTION 2: MATRIX EMERALD & CRIMSON CYBER THREAT RADAR RENDERERS
+// ==========================================================================
+
+// Option 2: Huge 3D Wireframe Cyber Globe Radar with Degree Markers & Orbit Rings
+function initOption2Globe() {
+    const canvas = document.getElementById('option2GlobeCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+        if (!canvas.parentElement) return;
+        canvas.width = canvas.parentElement.clientWidth || 550;
+        canvas.height = canvas.parentElement.clientHeight || 320;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let angleY = 0;
+    let angleX = 0.25;
+
+    // Denser 3D point cloud sphere
+    const nodes = [];
+    for (let i = 0; i < 90; i++) {
+        nodes.push({
+            theta: Math.random() * Math.PI * 2,
+            phi: Math.acos((Math.random() * 2) - 1),
+            isAlert: Math.random() > 0.55
+        });
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const radius = Math.min(canvas.width, canvas.height) * 0.42;
+
+        angleY += 0.009;
+
+        // Draw Outer Red Orbit Ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, 0.45);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 1.25, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 51, 51, 0.7)';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw Latitudinal Wireframe Rings (Emerald Green & Red Equator)
+        const latRings = 12;
+        for (let i = 1; i < latRings; i++) {
+            const latAngle = (Math.PI / latRings) * i - Math.PI / 2;
+            const ringRadius = radius * Math.cos(latAngle);
+            const ringY = radius * Math.sin(latAngle);
+
+            ctx.beginPath();
+            for (let a = 0; a <= Math.PI * 2; a += 0.06) {
+                const x = ringRadius * Math.sin(a);
+                const z = ringRadius * Math.cos(a);
+
+                const rx = x * Math.cos(angleY) + z * Math.sin(angleY);
+                const rz = -x * Math.sin(angleY) + z * Math.cos(angleY);
+                const ry = ringY * Math.cos(angleX) - rz * Math.sin(angleX);
+
+                const projX = cx + rx;
+                const projY = cy + ry;
+
+                if (a === 0) ctx.moveTo(projX, projY);
+                else ctx.lineTo(projX, projY);
+            }
+            ctx.strokeStyle = i === 6 ? 'rgba(255, 51, 51, 0.85)' : 'rgba(0, 255, 102, 0.45)';
+            ctx.lineWidth = i === 6 ? 2.0 : 1.0;
+            ctx.stroke();
+        }
+
+        // Draw Longitudinal Wireframe Meridians
+        const meridians = 14;
+        for (let i = 0; i < meridians; i++) {
+            const mAngle = (Math.PI / meridians) * i;
+            ctx.beginPath();
+            for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.06) {
+                const x = radius * Math.cos(a) * Math.sin(mAngle);
+                const y = radius * Math.sin(a);
+                const z = radius * Math.cos(a) * Math.cos(mAngle);
+
+                const rx = x * Math.cos(angleY) + z * Math.sin(angleY);
+                const rz = -x * Math.sin(angleY) + z * Math.cos(angleY);
+                const ry = y * Math.cos(angleX) - rz * Math.sin(angleX);
+
+                const projX = cx + rx;
+                const projY = cy + ry;
+
+                if (a === -Math.PI / 2) ctx.moveTo(projX, projY);
+                else ctx.lineTo(projX, projY);
+            }
+            ctx.strokeStyle = 'rgba(0, 255, 102, 0.35)';
+            ctx.lineWidth = 0.9;
+            ctx.stroke();
+        }
+
+        // Draw Dense Nodes & Alert Beacons
+        nodes.forEach(n => {
+            const x = radius * Math.sin(n.phi) * Math.cos(n.theta);
+            const y = radius * Math.cos(n.phi);
+            const z = radius * Math.sin(n.phi) * Math.sin(n.theta);
+
+            const rx = x * Math.cos(angleY) + z * Math.sin(angleY);
+            const rz = -x * Math.sin(angleY) + z * Math.cos(angleY);
+            const ry = y * Math.cos(angleX) - rz * Math.sin(angleX);
+
+            if (rz > -radius * 0.2) {
+                const projX = cx + rx;
+                const projY = cy + ry;
+
+                ctx.beginPath();
+                ctx.arc(projX, projY, n.isAlert ? 4.0 : 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = n.isAlert ? '#ff3333' : '#00ff66';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        });
+
+        // Center Crosshair
+        ctx.strokeStyle = 'rgba(0, 255, 102, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 25, cy); ctx.lineTo(cx + 25, cy);
+        ctx.moveTo(cx, cy - 25); ctx.lineTo(cx, cy + 25);
+        ctx.stroke();
+
+        requestAnimationFrame(render);
+    }
+    render();
+}
+
+// Option 2: Cyber Attack Live Map with Glowing Red Vectors
+function initOption2AttackMap() {
+    const canvas = document.getElementById('option2AttackMapCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+        if (!canvas.parentElement) return;
+        canvas.width = canvas.parentElement.clientWidth || 420;
+        canvas.height = canvas.parentElement.clientHeight || 240;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const regions = [
+        { name: 'USA', x: 0.25, y: 0.35 },
+        { name: 'SOUTH AMERICA', x: 0.36, y: 0.70 },
+        { name: 'EUROPE', x: 0.50, y: 0.30 },
+        { name: 'AFRICA', x: 0.52, y: 0.60 },
+        { name: 'ASIA', x: 0.78, y: 0.38 },
+        { name: 'AUSTRALIA', x: 0.88, y: 0.78 }
+    ];
+
+    const attacks = [];
+    function spawnAttack() {
+        const from = regions[Math.floor(Math.random() * regions.length)];
+        let to = regions[Math.floor(Math.random() * regions.length)];
+        while (to === from) {
+            to = regions[Math.floor(Math.random() * regions.length)];
+        }
+        attacks.push({
+            from,
+            to,
+            progress: 0,
+            speed: 0.02 + Math.random() * 0.025,
+            impactRipples: []
+        });
+    }
+
+    setInterval(spawnAttack, 350); // Fast attacks!
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.fillStyle = 'rgba(0, 255, 102, 0.12)';
+        ctx.strokeStyle = 'rgba(0, 255, 102, 0.45)';
+        ctx.lineWidth = 1.2;
+
+        // North America
+        ctx.beginPath();
+        ctx.moveTo(w * 0.15, h * 0.2); ctx.lineTo(w * 0.35, h * 0.2);
+        ctx.lineTo(w * 0.30, h * 0.45); ctx.lineTo(w * 0.18, h * 0.45);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // South America
+        ctx.beginPath();
+        ctx.moveTo(w * 0.32, h * 0.52); ctx.lineTo(w * 0.42, h * 0.55);
+        ctx.lineTo(w * 0.38, h * 0.82); ctx.lineTo(w * 0.30, h * 0.65);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Europe
+        ctx.beginPath();
+        ctx.moveTo(w * 0.45, h * 0.2); ctx.lineTo(w * 0.60, h * 0.2);
+        ctx.lineTo(w * 0.58, h * 0.4); ctx.lineTo(w * 0.44, h * 0.38);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Africa
+        ctx.beginPath();
+        ctx.moveTo(w * 0.46, h * 0.44); ctx.lineTo(w * 0.60, h * 0.46);
+        ctx.lineTo(w * 0.55, h * 0.78); ctx.lineTo(w * 0.47, h * 0.68);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Asia
+        ctx.beginPath();
+        ctx.moveTo(w * 0.62, h * 0.2); ctx.lineTo(w * 0.90, h * 0.22);
+        ctx.lineTo(w * 0.85, h * 0.52); ctx.lineTo(w * 0.62, h * 0.48);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Australia
+        ctx.beginPath();
+        ctx.moveTo(w * 0.80, h * 0.68); ctx.lineTo(w * 0.92, h * 0.68);
+        ctx.lineTo(w * 0.90, h * 0.85); ctx.lineTo(w * 0.78, h * 0.82);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Nodes
+        regions.forEach(r => {
+            const rx = r.x * w;
+            const ry = r.y * h;
+            ctx.beginPath();
+            ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#00ff66';
+            ctx.shadowColor = '#00ff66';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.font = '9px monospace';
+            ctx.fillText(r.name, rx + 6, ry + 3);
+        });
+
+        // Fast Red Vector Arcs
+        for (let i = attacks.length - 1; i >= 0; i--) {
+            const atk = attacks[i];
+            atk.progress += atk.speed;
+
+            const x1 = atk.from.x * w;
+            const y1 = atk.from.y * h;
+            const x2 = atk.to.x * w;
+            const y2 = atk.to.y * h;
+
+            const cx = (x1 + x2) / 2;
+            const cy = Math.min(y1, y2) - 40;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(cx, cy, x2, y2);
+            ctx.strokeStyle = 'rgba(255, 51, 51, 0.65)';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            const t = atk.progress;
+            const px = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2;
+            const py = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2;
+
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3333';
+            ctx.shadowColor = '#ff3333';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            if (atk.progress >= 1) {
+                ctx.beginPath();
+                ctx.arc(x2, y2, 14, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ff3333';
+                ctx.lineWidth = 2.0;
+                ctx.stroke();
+                attacks.splice(i, 1);
+            }
+        }
+
+        requestAnimationFrame(render);
+    }
+    render();
+}
+
+// Fast Terminal Log Generator for root@shadow_net:~$
+function initFastTerminalLogs() {
+    const term = document.getElementById('embeddedTermOutput');
+    if (!term) return;
+
+    const logSnippets = [
+        '<div class="t-row"><span class="t-green">root@shadow_net:~$</span> ./bruteforce --target 192.168.1.104 --dict rockyou.txt</div>',
+        '<div class="t-row t-red">Failed connection attempt: rootlitechanne-attopt [cr0:192:15:15:sc126]</div>',
+        '<div class="t-row t-red">Failed connection attempt: rootlechanne-attopt [cr0:0775:16:51:36]</div>',
+        '<div class="t-row t-red">Failed connection attempt: rootlitechanne-attopt [cr0:192:16:343:3:44]</div>',
+        '<div class="t-row t-green">Cracking in c:\\shadow_ncsa7... 89%</div>',
+        '<div class="t-row t-green">[BYPASS] Injected 0x7FFF0042 memory patch into daemon...</div>',
+        '<div class="t-row">[STATUS] Extracting RSA-4096 private key...</div>',
+        '<div class="t-row t-red">[ALERT] Port scanner detected on 10.0.0.84:443</div>',
+        '<div class="t-row t-green">[SUCCESS] Escalated privileges: uid=0(root) gid=0(root)</div>',
+        '<div class="t-row">Pulse: now at http://shadow_oyberd_now_net:/</div>'
+    ];
+
+    let idx = 0;
+    setInterval(() => {
+        const div = document.createElement('div');
+        div.innerHTML = logSnippets[idx % logSnippets.length];
+        term.appendChild(div.firstElementChild || div);
+        idx++;
+        if (term.children.length > 50) {
+            term.removeChild(term.firstElementChild);
+        }
+        term.scrollTop = term.scrollHeight;
+    }, 180);
+}
+
+// Option 2: Dynamic Multi-Channel Equalizers
+function initEqualizersOption2() {
+    const groups = ['eqBarsGroup1', 'eqBarsGroup2', 'eqBarsGroup3'];
+    groups.forEach(groupId => {
+        const container = document.getElementById(groupId);
+        if (!container) return;
+        container.innerHTML = '';
+        const barCount = 14;
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'eq-bar-col';
+            bar.style.height = (20 + Math.random() * 75) + '%';
+            container.appendChild(bar);
+        }
+    });
+
+    setInterval(() => {
+        groups.forEach(groupId => {
+            const container = document.getElementById(groupId);
+            if (!container) return;
+            const bars = container.querySelectorAll('.eq-bar-col');
+            bars.forEach(b => {
+                const h = 15 + Math.floor(Math.random() * 82);
+                b.style.height = h + '%';
+            });
+        });
+    }, 120);
+}
+
+// Option 2: Left Panel Telemetry Sparklines
+function initSparklinesOption2() {
+    function drawSparkline(canvasId, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = 220;
+        const h = canvas.height = 45;
+
+        const points = [];
+        for (let i = 0; i < 25; i++) {
+            points.push(Math.random() * h * 0.7 + 5);
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, w, h);
+
+            points.shift();
+            points.push(Math.random() * h * 0.7 + 5);
+
+            ctx.beginPath();
+            const step = w / (points.length - 1);
+            points.forEach((p, idx) => {
+                const x = idx * step;
+                if (idx === 0) ctx.moveTo(x, p);
+                else ctx.lineTo(x, p);
+            });
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            requestAnimationFrame(render);
+        }
+        setInterval(render, 300);
+    }
+
+    drawSparkline('sparkGraph1', '#ff3333');
+    drawSparkline('sparkGraph2', '#ff3333');
+    drawSparkline('globeConnGraph', '#00ff66');
+}
+
 // Global simulated loops registry initializer
 function initSimulatedWidgets() {
     initCCTVFeeds();
@@ -2502,5 +3139,13 @@ function initSimulatedWidgets() {
     initHudCodeStream();
     initHudBpm();
     initCpuMonitor();
+    initOption2Globe();
+    initOption2AttackMap();
+    initEqualizersOption2();
+    initSparklinesOption2();
+    initFastTerminalLogs();
 }
+
+
+
 
